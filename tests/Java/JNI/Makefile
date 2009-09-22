@@ -4,8 +4,7 @@ JAVA_HOME=/usr/lib/jvm/jdk1.6.0_14/
 #gcc -G -I/usr/local/java/include -I/usr/local/java/include/solaris 
 #	nativetest.c -o nativetest.so
 
-all:	
-	$(CC) -fPIC -shared -o libnativelib.so nativelib.c -lc
+all:	MemAccess memlib	
 
 MemAccess:
 	javac MemAccess.java
