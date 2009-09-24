@@ -14,14 +14,21 @@ public class MemAccess {
     
     void readGeneratedMem() throws Exception {
         // get a reference to the object that holds a pointer to the c++ buffer
-        ByteBuffer buffer = getGeneratedMem();
+	long size=64;
+	
+	int fd = openDevice("bonzo");
+
+        ByteBuffer buffer = getGeneratedMem(fd, size);
         buffer.order(ByteOrder.nativeOrder()); 
-        long nbr = 16;
         // walk through the c++ buffer to display the values
-//        for (int i = 0; i < nbr; i++)
-//            System.out.println(buffer.getLong());
-    
-	closeGeneratedMem();
+	System.out.println("size is " + size);   
+	int my_id = getShmemId(fd);
+	System.out.println("my_id is " + my_id);   
+
+	setSemaphore(fd, 0);
+	downSemaphore(fd);
+	 
+	closeGeneratedMem(fd);
 
         MessageDigest md = MessageDigest.getInstance("SHA-1");
 
@@ -38,19 +45,12 @@ public class MemAccess {
 
     }
     
-    native ByteBuffer getGeneratedMem();
-    native void closeGeneratedMem();
+    native ByteBuffer getGeneratedMem(int fd, long size);
+    native void closeGeneratedMem(int fd);
+    native int getShmemId(int fd);
+    native int openDevice(String str);
+    native void downSemaphore(int fd);
+    native void upSemaphore(int fd, int dest);
+    native void setSemaphore(int fd, int value);
  
-	private static final String toHex(int s) {
-		if (s < 10) {
-		   return new StringBuffer().
-                                append((char)('0' + s)).
-                                toString();
-		} else {
-		   return new StringBuffer().
-                                append((char)('A' + (s - 10))).
-                                toString();
-		}
-	}
-
 }
