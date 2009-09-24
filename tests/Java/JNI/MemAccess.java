@@ -26,14 +26,15 @@ public class MemAccess {
         Random myrand = new Random(); 
         MessageDigest md = MessageDigest.getInstance("SHA-1");
 
-        LongBuffer lb = getGeneratedMem(fd, size).asLongBuffer();
+        ByteBuffer bytebuffer = getGeneratedMem(fd, size);
+        LongBuffer lb = bytebuffer.asLongBuffer();
 
         for (int i = 0; i < size; i++) {
             lb.put(myrand.nextLong());
         }
 
         byte[] bytes = md.digest();
-        md.update(lb);
+        md.update(bytebuffer);
         bytes = md.digest();
          
         System.out.println(HexConversions.bytesToHex(bytes).toLowerCase());
