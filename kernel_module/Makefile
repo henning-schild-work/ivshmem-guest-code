@@ -20,7 +20,7 @@ default:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 install:
-	cp kvm_ivshmem.ko /lib/modules/$(shell uname -r)/misc
+	cp kvm_ivshmem.ko /lib/modules/$(shell uname -r)/kernel/drivers/char
 
 clean:
 	rm -f *.ko *.o kvm_ivshmem.mod.c Module.symvers
