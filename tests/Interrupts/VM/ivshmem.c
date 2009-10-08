@@ -12,7 +12,19 @@
 #include <errno.h>
 #include "ivshmem.h"
 
-char * ivshmem_strings[32] = { "SET_SEMA", "DOWN_SEMA", "SEMA_IRQ", "WAIT_EVENT", "WAIT_EVENT_IRQ" };
+char * ivshmem_strings[32] = { "SET_SEMA", "DOWN_SEMA", "SEMA_IRQ", "WAIT_EVENT", "WAIT_EVENT_IRQ", "GET_POSN", "GET_LIVELIST" };
+
+int ivshmem_recv(int fd, int ivshmem_cmd)
+{
+
+    int rv, buf;
+
+    printf("[RECVIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
+	rv = ioctl(fd, ivshmem_cmd, &buf);
+
+    return buf;
+
+}
 
 int ivshmem_send(int fd, int ivshmem_cmd, int destination_vm)
 {
@@ -36,11 +48,18 @@ int ivshmem_send(int fd, int ivshmem_cmd, int destination_vm)
         case WAIT_EVENT_IRQ:
 			printf("[SENDIOCTL] wait_event_irq\n");
             break;
+        case GET_IVPOSN:
+			printf("[SENDIOCTL] wait_event_irq\n");
+            break;
+        case GET_LIVELIST:
+			printf("[SENDIOCTL] wait_event_irq\n");
+            break;
 		default:
 			printf("[SENDIOCTL] unknown ioctl\n");
 	}
 #endif
 
+    printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
 	rv = ioctl(fd, ivshmem_cmd, destination_vm);
 
 #ifdef DEBUG
@@ -67,7 +86,7 @@ int ivshmem_print_opts(void)
 #ifdef DEBUG
     printf("ivshmem parameters: \n");
 #endif
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 7; i++) {
         printf ("%s: %d\n", ivshmem_strings[i], i);
     }
 
