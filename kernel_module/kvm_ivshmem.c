@@ -28,6 +28,8 @@ enum {
     IntrMask        = 0x00,    /* Interrupt Mask */
     IntrStatus      = 0x10,    /* Interrupt Status */
     Doorbell        = 0x20,    /* Doorbell */
+    IVPosition      = 0x30,
+    IVLiveList      = 0x40,
     ShmOK = 1                /* Everything is OK */
 };
 
@@ -63,7 +65,7 @@ static ssize_t kvm_ivshmem_read(struct file *, char *, size_t, loff_t *);
 static ssize_t kvm_ivshmem_write(struct file *, const char *, size_t, loff_t *);
 static loff_t kvm_ivshmem_lseek(struct file * filp, loff_t offset, int origin);
 
-enum ivshmem_ioctl { set_sema, down_sema, sema_irq, wait_event, wait_event_irq };
+enum ivshmem_ioctl { set_sema, down_sema, sema_irq, wait_event, wait_event_irq, read_ivposn, read_livelist };
 
 static const struct file_operations kvm_ivshmem_ops = {
     .owner   = THIS_MODULE,
@@ -115,6 +117,7 @@ static int kvm_ivshmem_ioctl(struct inode * ino, struct file * filp,
             break;
         case sema_irq:
             msg = ((arg & 0xff) << 8) + (cmd & 0xff);
+            printk("KVM_IVSHMEM: args is %ld\n", arg);
             printk("KVM_IVSHMEM: ringing sema doorbell\n");
             writew(msg, kvm_ivshmem_dev.regs + Doorbell);
             break;
@@ -129,29 +132,26 @@ static int kvm_ivshmem_ioctl(struct inode * ino, struct file * filp,
             printk("KVM_IVSHMEM: ringing wait_event doorbell on %d (msg = %d)\n", arg, msg);
             writew(msg, kvm_ivshmem_dev.regs + Doorbell);
             break;
-        default:
-            printk("KVM_IVSHMEM: bad ioctl\n");
-    }
-#endif
-
-#if 0
-    switch (cmd) {
-        case wait_event:
-            printk("KVM_IVSHMEM: sleeping on event (cmd = %d)\n", cmd);
-            wait_event_interruptible(wait_queue, (event_num == 1));
-            printk("KVM_IVSHMEM: waking\n");
-            event_num = 0;
+        case read_ivposn:
+            msg = readw( kvm_ivshmem_dev.regs + IVPosition);
+            printk("KVM_IVSHMEM: my posn is %d\n", msg);
+            rv = copy_to_user(arg, &msg, sizeof(msg));
             break;
-        case wait_event_irq:
-            // arg will be whch VM we want to ping or broadcast to all
-            printk("KVM_IVSHMEM: ringing wait_event doorbell on %ld\n", arg);
-            writeb(arg, kvm_ivshmem_dev.regs + Doorbell);
+        case read_livelist:
+            msg = readw( kvm_ivshmem_dev.regs + IVLiveList);
+            printk("KVM_IVSHMEM: live list bit vector is %d\n", msg);
+            rv = copy_to_user(arg, &msg, sizeof(msg));
+            break;
+        case 7:
+            msg = ((arg & 0xff) << 8) + (2 & 0xff);
+            printk("KVM_IVSHMEM: args is %ld\n", arg);
+            printk("KVM_IVSHMEM: ringing sema doorbell\n");
+            writew(msg, kvm_ivshmem_dev.regs + Doorbell);
             break;
         default:
             printk("KVM_IVSHMEM: bad ioctl\n");
     }
 #endif
-
 
     return 0;
 }
@@ -213,7 +213,7 @@ static ssize_t kvm_ivshmem_write(struct file * filp, const char * buffer,
 
     offset = *poffset;
 
-    printk(KERN_INFO "KVM_IVSHMEM: trying to write\n");
+//    printk(KERN_INFO "KVM_IVSHMEM: trying to write\n");
     if (!kvm_ivshmem_dev.base_addr) {
         printk(KERN_ERR "KVM_IVSHMEM: cannot write to ioaddr (NULL)\n");
         return 0;
@@ -223,7 +223,7 @@ static ssize_t kvm_ivshmem_write(struct file * filp, const char * buffer,
         len = kvm_ivshmem_dev.ioaddr_size - offset;
     }
 
-    printk(KERN_INFO "KVM_IVSHMEM: len is %u\n", (unsigned) len);
+//    printk(KERN_INFO "KVM_IVSHMEM: len is %u\n", (unsigned) len);
     if (len == 0) return 0;
 
     bytes_written = copy_from_user(kvm_ivshmem_dev.base_addr+offset,
@@ -232,8 +232,7 @@ static ssize_t kvm_ivshmem_write(struct file * filp, const char * buffer,
         return -EFAULT;
     }
 
-    printk(KERN_INFO "KVM_IVSHMEM: wrote %u bytes at offset %lu\n",
-                    (unsigned) len, offset);
+//    printk(KERN_INFO "KVM_IVSHMEM: wrote %u bytes at offset %lu\n", (unsigned) len, offset);
     *poffset += len;
     return len;
 }
