@@ -50,6 +50,7 @@ int main(int argc, char ** argv){
 
     /* Get the filesize */
     printf("[RECV] waiting for size from %d\n", sender);
+    printf("[RECV] full is %d\n", sem_getvalue(full));
     ivshmem_send(ivfd, WAIT_EVENT, sender);
     memcpy((void*)&total, (void*)copyfrom, sizeof(int));
     /* We got the size! */

@@ -77,6 +77,7 @@ int main(int argc, char ** argv){
 
     for(idx = sent = 0; sent < total; idx = NEXT(idx)) {
         printf("[SEND] waiting for available block\n");
+        printf("[SEND] empty is %d\n", sem_getvalue(empty));
         sem_wait(empty);
         printf("[SEND] sending bytes in block %d\n", idx);
         read(ffd, copyto + OFFSET(idx), CHUNK_SZ);
