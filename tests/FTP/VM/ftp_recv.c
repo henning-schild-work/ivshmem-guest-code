@@ -65,6 +65,10 @@ int main(int argc, char ** argv){
         printf("[RECV] waiting for block notification\n");
         sem_getvalue(full, &dbg);
         printf("[RECV] full is %d\n", dbg);
+        if(dbg > 15) {
+            printf("[RECV] full over 15! wtf!\n");
+            exit(-1);
+        }
         sem_wait(full);
         printf("[RECV] recieving bytes in block %d\n", idx);
         write(ffd, copyfrom + OFFSET(idx), CHUNK_SZ);

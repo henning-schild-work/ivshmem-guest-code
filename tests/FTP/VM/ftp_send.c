@@ -81,6 +81,10 @@ int main(int argc, char ** argv){
         printf("[SEND] waiting for available block\n");
         sem_getvalue(empty, &dbg);
         printf("[SEND] empty is %d\n", dbg);
+        if(dbg > 15) {
+            printf("[SEND] empty is over 15! wtf!\n");
+            exit(-1);
+        }
         sem_wait(empty);
         printf("[SEND] sending bytes in block %d\n", idx);
         read(ffd, copyto + OFFSET(idx), CHUNK_SZ);
