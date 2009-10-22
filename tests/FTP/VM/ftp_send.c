@@ -8,12 +8,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <arpa/inet.h>
+#include <semaphore.h>
 #include "ivshmem.h"
 
 #define CHUNK_SZ  (16*1024*1024)
-#define NEXT(i)   ((i + 1) % 16)
-#define OFFSET(i) (i * CHUNK_SZ)
+#define NEXT(i)   ((i + 1) % 15)
+#define OFFSET(i) ((i + 1) * CHUNK_SZ)
 
 int main(int argc, char ** argv){
 
@@ -23,6 +23,8 @@ int main(int argc, char ** argv){
     char * copyto;
     int idx, sent, total;
     struct stat st;
+
+    sem_t *full, *empty;
 
     if (argc != 4){
         printf("USAGE: ftp_send <ivshmem_device> <file> <receiver>\n");
@@ -62,15 +64,19 @@ int main(int argc, char ** argv){
     ivshmem_send(ivfd, WAIT_EVENT, receiver);
     printf("[SEND] ack!\n");
 
-    ivshmem_send(ivfd, SET_SEMA, 16);
+    full = (sem_t *)copyto;
+    empty = (sem_t *)(copyto + sizeof(sem_t));
+    sem_init(full, 1, 0);
+    sem_init(empty, 1, 16);
+
     for(idx = sent = 0; sent < total; idx = NEXT(idx)) {
         printf("[SEND] waiting for available block\n");
-        ivshmem_send(ivfd, DOWN_SEMA, 0);
+        sem_wait(empty);
         printf("[SEND] sending bytes in block %d\n", idx);
         read(ffd, copyto + OFFSET(idx), CHUNK_SZ);
         sent += CHUNK_SZ;
         printf("[SEND] notifying, sent size now %d\n", sent);
-        ivshmem_send(ivfd, WAIT_EVENT_IRQ, receiver);
+        sem_post(full);
     }
 
     munmap(memptr, 16*CHUNK_SZ);

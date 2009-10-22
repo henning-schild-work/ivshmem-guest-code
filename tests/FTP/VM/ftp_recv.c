@@ -8,12 +8,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <arpa/inet.h>
+#include <semaphore.h>
 #include "ivshmem.h"
 
 #define CHUNK_SZ  (16*1024*1024)
-#define NEXT(i)   ((i + 1) % 16)
-#define OFFSET(i) (i * CHUNK_SZ)
+#define NEXT(i)   ((i + 1) % 15)
+#define OFFSET(i) ((i + 1) * CHUNK_SZ)
 
 int main(int argc, char ** argv){
 
@@ -22,6 +22,8 @@ int main(int argc, char ** argv){
     void * memptr;
     char * copyfrom;
     int idx, recvd, total;
+
+    sem_t *full, *empty;
 
     if (argc != 4){
         printf("USAGE: ftp_recv <ivshmem_device> <file> <sender>\n");
@@ -54,14 +56,17 @@ int main(int argc, char ** argv){
     printf("[RECV] got size %d, notifying\n", total);
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, sender);
 
+    full = (sem_t *)copyfrom;
+    empty = (sem_t *)(copyfrom + sizeof(sem_t));
+
     for(idx = recvd = 0; recvd < total; idx = NEXT(idx)) {
         printf("[RECV] waiting for block notification\n");
-        ivshmem_send(ivfd, WAIT_EVENT, sender);
+        sem_wait(full);
         printf("[RECV] recieving bytes in block %d\n", idx);
         write(ffd, copyfrom + OFFSET(idx), CHUNK_SZ);
         recvd += CHUNK_SZ;
         printf("[RECV] block received, notifying sender. recvd size now %d\n", recvd);
-        ivshmem_send(ivfd, SEMA_IRQ, sender);
+        sem_post(empty);
     }
 
     ftruncate(ffd, total);
