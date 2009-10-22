@@ -57,8 +57,14 @@ int main(int argc, char ** argv){
 
     full = (sem_t *)copyto;
     empty = (sem_t *)(copyto + sizeof(sem_t));
-    sem_init(full, 1, 0);
-    sem_init(empty, 1, 16);
+    if(sem_init(full, 1, 0) != 0) {
+        printf("couldn't initialize full semaphore\n");
+        exit(-1);
+    }
+    if(sem_init(empty, 1, 15) != 0) {
+        printf("couldn't initialize empty semaphore\n");
+        exit(-1);
+    }
 
     /* Send the file size */
     printf("[SEND] sending size %d to receiver %d\n", total, receiver);

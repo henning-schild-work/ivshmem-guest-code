@@ -32,7 +32,7 @@ int main(int argc, char ** argv){
 
     sender = atoi(argv[3]);
 
-    if((ffd = open(argv[2], O_WRONLY|O_CREAT, 644)) == -1) {
+    if((ffd = open(argv[2], O_WRONLY|O_CREAT, 0644)) == -1) {
         printf("could not open file\n");
         exit(-1);
     }
