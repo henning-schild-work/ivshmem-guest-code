@@ -12,7 +12,7 @@
 #include <errno.h>
 #include "ivshmem.h"
 
-char * ivshmem_strings[32] = { "SET_SEMA", "DOWN_SEMA", "SEMA_IRQ", "WAIT_EVENT", "WAIT_EVENT_IRQ", "GET_POSN", "GET_LIVELIST" };
+char * ivshmem_strings[32] = { "SET_SEMA", "DOWN_SEMA", "EMPTY", "WAIT_EVENT", "WAIT_EVENT_IRQ", "GET_POSN", "GET_LIVELIST", "SEMA_IRQ" };
 
 int ivshmem_recv(int fd, int ivshmem_cmd)
 {
