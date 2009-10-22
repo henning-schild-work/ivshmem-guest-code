@@ -69,7 +69,7 @@ int main(int argc, char ** argv){
 
     /* Send the file size */
     printf("[SEND] sending size %d to receiver %d\n", total, receiver);
-    memcpy((void*)copyto, (void*)&total, sizeof(int));
+    memcpy((void*)(copyto + OFFSET(0)), (void*)&total, sizeof(int));
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, receiver);
     /* Wait to know the reciever got the size */
     printf("[SEND] waiting for receiver to ack size\n");
