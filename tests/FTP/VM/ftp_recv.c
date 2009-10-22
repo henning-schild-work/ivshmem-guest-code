@@ -22,6 +22,7 @@ int main(int argc, char ** argv){
     void * memptr;
     char * copyfrom;
     int idx, recvd, total;
+    int dbg;
 
     sem_t *full, *empty;
 
@@ -50,7 +51,6 @@ int main(int argc, char ** argv){
 
     /* Get the filesize */
     printf("[RECV] waiting for size from %d\n", sender);
-    printf("[RECV] full is %d\n", sem_getvalue(full));
     ivshmem_send(ivfd, WAIT_EVENT, sender);
     memcpy((void*)&total, (void*)copyfrom, sizeof(int));
     /* We got the size! */
@@ -62,6 +62,8 @@ int main(int argc, char ** argv){
 
     for(idx = recvd = 0; recvd < total; idx = NEXT(idx)) {
         printf("[RECV] waiting for block notification\n");
+        sem_getvalue(full, &dbg);
+        printf("[RECV] full is %d\n", dbg);
         sem_wait(full);
         printf("[RECV] recieving bytes in block %d\n", idx);
         write(ffd, copyfrom + OFFSET(idx), CHUNK_SZ);
