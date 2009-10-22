@@ -7,5 +7,6 @@
 
 #define FULL_LOC  memptr
 #define EMPTY_LOC (memptr + sizeof(sem_t))
+#define BUF_LOC   (memptr + CHUNK_SZ)
 
 #endif /* _FTP_H */

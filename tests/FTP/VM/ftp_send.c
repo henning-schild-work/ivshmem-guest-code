@@ -51,7 +51,7 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    copyto = (char *)(memptr + CHUNK_SZ);
+    copyto = (char *)BUF_LOC;
 
     /* Initialize the semaphores */
     full = (sem_t *)FULL_LOC;
@@ -64,10 +64,12 @@ int main(int argc, char ** argv){
         printf("couldn't initialize empty semaphore\n");
         exit(-1);
     }
+    msync(memptr, CHUNK_SZ, MS_SYNC);
 
     /* Send the file size */
     printf("[SEND] sending size %d to receiver %d\n", total, receiver);
     memcpy((void*)copyto, (void*)&total, sizeof(int));
+    msync(copyto, sizeof(int), MS_SYNC);
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, receiver);
     /* Wait to know the reciever got the size */
     printf("[SEND] waiting for receiver to ack size\n");
@@ -83,11 +85,14 @@ int main(int argc, char ** argv){
             exit(-1);
         }
         sem_wait(empty);
+        msync(empty, sizeof(sem_t), MS_SYNC);
         printf("[SEND] sending bytes in block %d\n", idx);
         read(ffd, copyto + OFFSET(idx), CHUNK_SZ);
+        msync(copyto + OFFSET(idx), CHUNK_SZ, MS_SYNC);
         sent += CHUNK_SZ;
         printf("[SEND] notifying, sent size now %d\n", sent);
         sem_post(full);
+        msync(full, sizeof(sem_t), MS_SYNC);
     }
 
     munmap(memptr, 16*CHUNK_SZ);

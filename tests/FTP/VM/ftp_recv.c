@@ -44,7 +44,7 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
-    copyfrom = (char *)(memptr + CHUNK_SZ);
+    copyfrom = (char *)BUF_LOC;
 
     /* Get the filesize */
     printf("[RECV] waiting for size from %d\n", sender);
@@ -67,11 +67,13 @@ int main(int argc, char ** argv){
             exit(-1);
         }
         sem_wait(full);
+        msync(full, sizeof(sem_t), MS_SYNC);
         printf("[RECV] recieving bytes in block %d\n", idx);
         write(ffd, copyfrom + OFFSET(idx), CHUNK_SZ);
         recvd += CHUNK_SZ;
         printf("[RECV] block received, notifying sender. recvd size now %d\n", recvd);
         sem_post(empty);
+        msync(empty, sizeof(sem_t), MS_SYNC);
     }
 
     ftruncate(ffd, total);
