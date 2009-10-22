@@ -9,11 +9,8 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <semaphore.h>
+#include "ftp.h"
 #include "ivshmem.h"
-
-#define CHUNK_SZ  (16*1024*1024)
-#define NEXT(i)   ((i + 1) % 15)
-#define OFFSET(i) (i * CHUNK_SZ)
 
 int main(int argc, char ** argv){
 
@@ -57,8 +54,8 @@ int main(int argc, char ** argv){
     copyto = (char *)(memptr + CHUNK_SZ);
 
     /* Initialize the semaphores */
-    full = (sem_t *)memptr;
-    empty = (sem_t *)(memptr + sizeof(sem_t));
+    full = (sem_t *)FULL_LOC;
+    empty = (sem_t *)EMPTY_LOC;
     if(sem_init(full, 1, 0) != 0) {
         printf("couldn't initialize full semaphore\n");
         exit(-1);
