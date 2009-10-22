@@ -55,6 +55,11 @@ int main(int argc, char ** argv){
 
     copyto = (char *)memptr;
 
+    full = (sem_t *)copyto;
+    empty = (sem_t *)(copyto + sizeof(sem_t));
+    sem_init(full, 1, 0);
+    sem_init(empty, 1, 16);
+
     /* Send the file size */
     printf("[SEND] sending size %d to receiver %d\n", total, receiver);
     memcpy((void*)copyto, (void*)&total, sizeof(int));
@@ -63,11 +68,6 @@ int main(int argc, char ** argv){
     printf("[SEND] waiting for receiver to ack size\n");
     ivshmem_send(ivfd, WAIT_EVENT, receiver);
     printf("[SEND] ack!\n");
-
-    full = (sem_t *)copyto;
-    empty = (sem_t *)(copyto + sizeof(sem_t));
-    sem_init(full, 1, 0);
-    sem_init(empty, 1, 16);
 
     for(idx = sent = 0; sent < total; idx = NEXT(idx)) {
         printf("[SEND] waiting for available block\n");
