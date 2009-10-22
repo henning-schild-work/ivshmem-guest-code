@@ -13,7 +13,7 @@
 
 #define CHUNK_SZ  (16*1024*1024)
 #define NEXT(i)   ((i + 1) % 15)
-#define OFFSET(i) ((i + 1) * CHUNK_SZ)
+#define OFFSET(i) (i * CHUNK_SZ)
 
 int main(int argc, char ** argv){
 
@@ -54,10 +54,11 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    copyto = (char *)memptr;
+    copyto = (char *)(memptr + CHUNK_SZ);
 
-    full = (sem_t *)copyto;
-    empty = (sem_t *)(copyto + sizeof(sem_t));
+    /* Initialize the semaphores */
+    full = (sem_t *)memptr;
+    empty = (sem_t *)(memptr + sizeof(sem_t));
     if(sem_init(full, 1, 0) != 0) {
         printf("couldn't initialize full semaphore\n");
         exit(-1);
@@ -69,7 +70,7 @@ int main(int argc, char ** argv){
 
     /* Send the file size */
     printf("[SEND] sending size %d to receiver %d\n", total, receiver);
-    memcpy((void*)(copyto + OFFSET(0)), (void*)&total, sizeof(int));
+    memcpy((void*)copyto, (void*)&total, sizeof(int));
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, receiver);
     /* Wait to know the reciever got the size */
     printf("[SEND] waiting for receiver to ack size\n");

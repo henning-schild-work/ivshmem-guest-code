@@ -13,7 +13,7 @@
 
 #define CHUNK_SZ  (16*1024*1024)
 #define NEXT(i)   ((i + 1) % 15)
-#define OFFSET(i) ((i + 1) * CHUNK_SZ)
+#define OFFSET(i) (i * CHUNK_SZ)
 
 int main(int argc, char ** argv){
 
@@ -47,18 +47,19 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
-    copyfrom = (char *)memptr;
+    copyfrom = (char *)(memptr + CHUNK_SZ);
 
     /* Get the filesize */
     printf("[RECV] waiting for size from %d\n", sender);
     ivshmem_send(ivfd, WAIT_EVENT, sender);
-    memcpy((void*)&total, (void*)(copyfrom + OFFSET(0)), sizeof(int));
+    memcpy((void*)&total, (void*)copyfrom, sizeof(int));
     /* We got the size! */
     printf("[RECV] got size %d, notifying\n", total);
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, sender);
 
-    full = (sem_t *)copyfrom;
-    empty = (sem_t *)(copyfrom + sizeof(sem_t));
+    /* My semaphores */
+    full = (sem_t *)memptr;
+    empty = (sem_t *)(memptr + sizeof(sem_t));
 
     for(idx = recvd = 0; recvd < total; idx = NEXT(idx)) {
         printf("[RECV] waiting for block notification\n");
