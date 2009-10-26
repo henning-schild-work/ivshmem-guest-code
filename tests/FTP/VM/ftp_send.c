@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <semaphore.h>
+#include <time.h>
+#include <pthread.h>
 #include "ftp.h"
 #include "ivshmem.h"
 
@@ -20,9 +21,9 @@ int main(int argc, char ** argv){
     char * copyto;
     int idx, sent, total;
     struct stat st;
-    int dbg;
 
-    sem_t *full, *empty;
+    int *full, *empty;
+    pthread_spinlock_t *flock, *elock;
 
     if (argc != 4){
         printf("USAGE: ftp_send <ivshmem_device> <file> <receiver>\n");
@@ -53,23 +54,20 @@ int main(int argc, char ** argv){
 
     copyto = (char *)BUF_LOC;
 
-    /* Initialize the semaphores */
-    full = (sem_t *)FULL_LOC;
-    empty = (sem_t *)EMPTY_LOC;
-    if(sem_init(full, 1, 0) != 0) {
-        printf("couldn't initialize full semaphore\n");
-        exit(-1);
-    }
-    if(sem_init(empty, 1, 15) != 0) {
-        printf("couldn't initialize empty semaphore\n");
-        exit(-1);
-    }
-    msync(memptr, CHUNK_SZ, MS_SYNC);
+    /* Initialize the "semaphores" */
+    flock = (pthread_spinlock_t *)FLOCK_LOC;
+    full = (int *)FULL_LOC;
+    elock = (pthread_spinlock_t *)ELOCK_LOC;
+    empty = (int *)EMPTY_LOC;
+
+    pthread_spin_init(flock, 1);
+    pthread_spin_init(elock, 1);
+    *full = 0;
+    *empty = 15;
 
     /* Send the file size */
     printf("[SEND] sending size %d to receiver %d\n", total, receiver);
     memcpy((void*)copyto, (void*)&total, sizeof(int));
-    msync(copyto, sizeof(int), MS_SYNC);
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, receiver);
     /* Wait to know the reciever got the size */
     printf("[SEND] waiting for receiver to ack size\n");
@@ -78,21 +76,21 @@ int main(int argc, char ** argv){
 
     for(idx = sent = 0; sent < total; idx = NEXT(idx)) {
         printf("[SEND] waiting for available block\n");
-        sem_getvalue(empty, &dbg);
-        printf("[SEND] empty is %d\n", dbg);
-        if(dbg > 15) {
-            printf("[SEND] empty is over 15! wtf!\n");
-            exit(-1);
+        while(*empty == 0) {
+            usleep(50);
         }
-        sem_wait(empty);
-        msync(empty, sizeof(sem_t), MS_SYNC);
+        while(pthread_spin_lock(elock) != 0);
+        *empty = *empty - 1;
+        pthread_spin_unlock(elock);
+
         printf("[SEND] sending bytes in block %d\n", idx);
         read(ffd, copyto + OFFSET(idx), CHUNK_SZ);
-        msync(copyto + OFFSET(idx), CHUNK_SZ, MS_SYNC);
         sent += CHUNK_SZ;
         printf("[SEND] notifying, sent size now %d\n", sent);
-        sem_post(full);
-        msync(full, sizeof(sem_t), MS_SYNC);
+
+        while(pthread_spin_lock(flock) != 0);
+        *full = *full + 1;
+        pthread_spin_unlock(flock);
     }
 
     munmap(memptr, 16*CHUNK_SZ);

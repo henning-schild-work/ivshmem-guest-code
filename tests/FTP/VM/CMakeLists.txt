@@ -6,7 +6,7 @@ add_executable(ftp_send ftp_send)
 add_library(ivshmem ivshmem)
 
 set(CMAKE_C_FLAGS_DEBUG "-DDEBUG")
-set(CMAKE_C_FLAGS "-std=c99 -g -Wall")
-target_link_libraries(ftp_recv ivshmem rt crypto)
+set(CMAKE_C_FLAGS "-std=c99 -g -Wall -D_GNU_SOURCE")
+target_link_libraries(ftp_recv ivshmem rt crypto pthread)
 target_link_libraries(ftp_send ivshmem rt crypto pthread)
 

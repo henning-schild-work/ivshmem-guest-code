@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <semaphore.h>
+#include <time.h>
+#include <pthread.h>
 #include "ftp.h"
 #include "ivshmem.h"
 
@@ -19,9 +20,9 @@ int main(int argc, char ** argv){
     void * memptr;
     char * copyfrom;
     int idx, recvd, total;
-    int dbg;
 
-    sem_t *full, *empty;
+    int *full, *empty;
+    pthread_spinlock_t *flock, *elock;
 
     if (argc != 4){
         printf("USAGE: ftp_recv <ivshmem_device> <file> <sender>\n");
@@ -54,26 +55,29 @@ int main(int argc, char ** argv){
     printf("[RECV] got size %d, notifying\n", total);
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, sender);
 
-    /* My semaphores */
-    full = (sem_t *)FULL_LOC;
-    empty = (sem_t *)EMPTY_LOC;
+    /* My "semaphores" */
+    flock = (pthread_spinlock_t *)FLOCK_LOC;
+    full = (int *)FULL_LOC;
+    elock = (pthread_spinlock_t *)ELOCK_LOC;
+    empty = (int *)EMPTY_LOC;
 
     for(idx = recvd = 0; recvd < total; idx = NEXT(idx)) {
         printf("[RECV] waiting for block notification\n");
-        sem_getvalue(full, &dbg);
-        printf("[RECV] full is %d\n", dbg);
-        if(dbg > 15) {
-            printf("[RECV] full over 15! wtf!\n");
-            exit(-1);
+        while(*full == 0) {
+            usleep(50);
         }
-        sem_wait(full);
-        msync(full, sizeof(sem_t), MS_SYNC);
+        while(pthread_spin_lock(flock) != 0);
+        *full = *full - 1;
+        pthread_spin_unlock(flock);
+
         printf("[RECV] recieving bytes in block %d\n", idx);
         write(ffd, copyfrom + OFFSET(idx), CHUNK_SZ);
         recvd += CHUNK_SZ;
         printf("[RECV] block received, notifying sender. recvd size now %d\n", recvd);
-        sem_post(empty);
-        msync(empty, sizeof(sem_t), MS_SYNC);
+
+        while(pthread_spin_lock(elock) != 0);
+        *empty = *empty + 1;
+        pthread_spin_unlock(elock);
     }
 
     ftruncate(ffd, total);
