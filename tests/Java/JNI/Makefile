@@ -11,7 +11,7 @@ MemAccess:
 	javah -jni MemAccess
 
 memlib:
-	g++ -fPIC -shared -o libMemAccess.so MemAccess.cpp ivshmem.c
+	g++ -fPIC -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -shared -o libMemAccess.so MemAccess.cpp ivshmem.c
 	
 
 #	$(CC) -fPIC -o libnativelib.so -shared -Wl,-soname,libnative.so \
