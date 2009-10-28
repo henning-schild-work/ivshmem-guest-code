@@ -36,12 +36,14 @@ JNIEXPORT jint JNICALL Java_MemAccess_closeDevice (JNIEnv *env, jobject obj) {
 }
 
 JNIEXPORT jint JNICALL Java_MemAccess_writeBytes (JNIEnv *env, jobject obj, jbyteArray bytes, jint offset, jint cnt) {
-    (*env)->SetByteArrayRegion(env, bytes, offset, cnt, (jbyte *)mem);
+    char *to = mem + offset;
+    (*env)->GetByteArrayRegion(env, bytes, 0, cnt, (jbyte *)to);
     return(0);
 }
 
 JNIEXPORT jint JNICALL Java_MemAccess_readBytes (JNIEnv *env, jobject obj, jbyteArray bytes, jint offset, jint cnt) {
-    (*env)->GetByteArrayRegion(env, bytes, offset, cnt, (jbyte *)mem);
+    char *from = mem + offset;
+    (*env)->SetByteArrayRegion(env, bytes, 0, cnt, (jbyte *)from);
     return(0);
 }
 
