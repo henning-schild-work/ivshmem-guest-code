@@ -18,7 +18,7 @@ public class FTPRecv extends FTP {
         FileOutputStream file = new FileOutputStream(recvfile);
 
         mem.waitEvent(sender);
-        total = mem.readInt(0);
+        total = mem.readInt(OFFSET(0));
         mem.waitEventIrq(sender);
 
         recvd = 0;
