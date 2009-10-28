@@ -40,7 +40,7 @@ public class FTPRecv extends FTP {
             mem.readBytes(bytes, OFFSET(idx), CHUNK_SZ);
             file.write(bytes, 0, CHUNK_SZ);
             recvd += CHUNK_SZ;
-            System.out.println("[RECV] Read bytes from sender. recvd =  " + String.valueOf(recvd));
+            System.out.println("[RECV] Read bytes in slot " + String.valueOf(idx) + " recvd =  " + String.valueOf(recvd));
 
             while(mem.spinLock(ELOCK) != 0);
             empty = mem.readInt(EMPTY);
