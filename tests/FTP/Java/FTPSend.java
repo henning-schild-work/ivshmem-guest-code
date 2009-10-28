@@ -36,7 +36,7 @@ public class FTPSend extends FTP {
             do {
                 Thread.sleep(50);
                 empty = mem.readInt(EMPTY);
-            } while(EMPTY == 0); 
+            } while(empty == 0); 
             while(mem.spinLock(ELOCK) != 0);
             empty = empty - 1;
             mem.writeInt(empty, EMPTY);
@@ -51,6 +51,7 @@ public class FTPSend extends FTP {
             while(mem.spinLock(FLOCK) != 0);
             full = mem.readInt(FULL);
             full = full + 1;
+            mem.writeInt(full, FULL);
             mem.spinUnlock(FLOCK);
             System.out.println("[SEND] Incremented full to " + String.valueOf(full));
         }

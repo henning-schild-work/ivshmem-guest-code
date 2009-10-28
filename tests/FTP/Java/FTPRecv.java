@@ -45,6 +45,7 @@ public class FTPRecv extends FTP {
             while(mem.spinLock(ELOCK) != 0);
             empty = mem.readInt(EMPTY);
             empty = empty + 1;
+            mem.writeInt(empty, EMPTY);
             mem.spinUnlock(ELOCK);
             System.out.println("[RECV] Incremented empty to " + String.valueOf(empty));
         }
