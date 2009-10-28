@@ -54,21 +54,21 @@ JNIEXPORT jint JNICALL Java_MemAccess_readInt (JNIEnv *env, jobject obj, jint of
     return(*((jint *)(mem + offset)));
 }
 
-JNIEXPORT jint JNICALL Java_MemAccess_InitLock (JNIEnv *env, jobject obj, jint offset) {
+JNIEXPORT jint JNICALL Java_MemAccess_initLock (JNIEnv *env, jobject obj, jint offset) {
     pthread_spinlock_t *sl = (pthread_spinlock_t *)(mem + offset);
     pthread_spin_init(sl, 1);
 
     return(0);
 }
 
-JNIEXPORT jint JNICALL Java_MemAccess_SpinLock (JNIEnv *env, jobject obj, jint offset) {
+JNIEXPORT jint JNICALL Java_MemAccess_spinLock (JNIEnv *env, jobject obj, jint offset) {
     pthread_spinlock_t *sl = (pthread_spinlock_t *)(mem + offset);
     while(pthread_spin_lock(sl) != 0);
 
     return(0);
 }
 
-JNIEXPORT jint JNICALL Java_MemAccess_SpinUnlock (JNIEnv *env, jobject obj, jint offset) {
+JNIEXPORT jint JNICALL Java_MemAccess_spinUnlock (JNIEnv *env, jobject obj, jint offset) {
     pthread_spinlock_t *sl = (pthread_spinlock_t *)(mem + offset);
     pthread_spin_unlock(sl);
 
