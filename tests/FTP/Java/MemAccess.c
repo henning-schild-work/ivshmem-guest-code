@@ -29,6 +29,12 @@ JNIEXPORT jint JNICALL Java_MemAccess_openDevice (JNIEnv *env, jobject obj, jstr
     return(0);
 }
 
+JNIEXPORT jint JNICALL Java_MemAccess_closeDevice (JNIEnv *env, jobject obj) {
+    munmap(mem, 16*CHUNK_SZ);
+    close(fd);
+    return(0);
+}
+
 JNIEXPORT jint JNICALL Java_MemAccess_writeBytes (JNIEnv *env, jobject obj, jbyteArray bytes, jint offset, jint cnt) {
     (*env)->GetByteArrayRegion(env, bytes, offset, cnt, (jbyte *)mem);
     return(0);

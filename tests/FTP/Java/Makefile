@@ -2,10 +2,10 @@ CC=gcc
 JAVA_HOME=/usr/lib/jvm/jdk1.6.0_14
 CFLAGS=-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC -shared -Wall -D_GNU_SOURCE
 
-all: libMemAccess.so
+all: libMemAccess.so FTPRecv.class
 
-MemAccess.class: MemAccess.java
-	javac MemAccess.java
+%.class: %.java
+	javac $<
 
 MemAccess.h: MemAccess.class
 	javah -jni MemAccess

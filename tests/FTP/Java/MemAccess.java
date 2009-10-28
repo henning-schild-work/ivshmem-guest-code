@@ -1,22 +1,23 @@
-import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.util.Random;
- 
 public class MemAccess {
     static {
         System.loadLibrary("MemAccess");
     }
+
+    public MemAccess(String devname) throws Exception {
+        if(openDevice(devname) != 0) {
+            throw new Exception("Could not open device.");
+        }
+    }
     
-    native int openDevice(String devname);
-    native int writeBytes(byte[] bytes, int offset, int cnt);
-    native int readBytes(byte[] bytes, int offset, int cnt);
-    native int writeInt(int towrite, int offset);
-    native int readInt(int offset);
-    native int InitLock(int offset);
-    native int SpinLock(int offset);
-    native int SpinUnlock(int offset);
-    native int waitEvent(int client);
-    native int waitEventIrq(int client);
+    public native int openDevice(String devname);
+    public native int closeDevice();
+    public native int writeBytes(byte[] bytes, int offset, int cnt);
+    public native int readBytes(byte[] bytes, int offset, int cnt);
+    public native int writeInt(int towrite, int offset);
+    public native int readInt(int offset);
+    public native int initLock(int offset);
+    public native int spinLock(int offset);
+    public native int spinUnlock(int offset);
+    public native int waitEvent(int client);
+    public native int waitEventIrq(int client);
 }
