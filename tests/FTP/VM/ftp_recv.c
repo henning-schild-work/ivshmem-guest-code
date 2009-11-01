@@ -53,6 +53,7 @@ int main(int argc, char ** argv){
     memcpy((void*)&total, (void*)copyfrom, sizeof(int));
     /* We got the size! */
     printf("[RECV] got size %d, notifying\n", total);
+    printf("[RECV] TIME = %d\n", time(NULL));
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, sender);
 
     /* My "semaphores" */
@@ -81,6 +82,8 @@ int main(int argc, char ** argv){
     }
 
     ftruncate(ffd, total);
+
+    printf("[RECV] TIME = %d\n", time(NULL));
 
     munmap(memptr, 16*CHUNK_SZ);
     close(ffd);
