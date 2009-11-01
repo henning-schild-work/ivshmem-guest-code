@@ -19,7 +19,8 @@ int main(int argc, char ** argv){
     int sender;
     void * memptr;
     char * copyfrom;
-    int idx, recvd, total;
+    int idx, recvd;
+    unsigned int total;
 
     int *full, *empty;
     pthread_spinlock_t *flock, *elock;
@@ -50,7 +51,7 @@ int main(int argc, char ** argv){
     /* Get the filesize */
     printf("[RECV] waiting for size from %d\n", sender);
     ivshmem_send(ivfd, WAIT_EVENT, sender);
-    memcpy((void*)&total, (void*)copyfrom, sizeof(int));
+    memcpy((void*)&total, (void*)copyfrom, sizeof(unsigned int));
     /* We got the size! */
     printf("[RECV] got size %d, notifying\n", total);
     printf("[RECV] TIME = %d\n", time(NULL));
