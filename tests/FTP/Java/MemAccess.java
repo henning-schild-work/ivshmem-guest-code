@@ -15,6 +15,8 @@ public class MemAccess {
     public native int readBytes(byte[] bytes, int offset, int cnt);
     public native int writeInt(int towrite, int offset);
     public native int readInt(int offset);
+    public native int writeLong(long towrite, int offset);
+    public native long readLong(int offset);
     public native int initLock(int offset);
     public native int spinLock(int offset);
     public native int spinUnlock(int offset);

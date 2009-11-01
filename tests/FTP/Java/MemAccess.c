@@ -52,8 +52,17 @@ JNIEXPORT jint JNICALL Java_MemAccess_writeInt (JNIEnv *env, jobject obj, jint t
     return(0);
 }
 
+JNIEXPORT jint JNICALL Java_MemAccess_writeLong (JNIEnv *env, jobject obj, jlong towrite, jint offset) {
+    *((jlong *)(mem + offset)) = towrite;
+    return(0);
+}
+
 JNIEXPORT jint JNICALL Java_MemAccess_readInt (JNIEnv *env, jobject obj, jint offset) {
     return(*((jint *)(mem + offset)));
+}
+
+JNIEXPORT jlong JNICALL Java_MemAccess_readLong (JNIEnv *env, jobject obj, jint offset) {
+    return(*((jlong *)(mem + offset)));
 }
 
 JNIEXPORT jint JNICALL Java_MemAccess_initLock (JNIEnv *env, jobject obj, jint offset) {

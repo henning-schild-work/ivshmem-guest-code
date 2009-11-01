@@ -6,9 +6,10 @@ public class FTPRecv extends FTP {
         MemAccess mem;
         String recvfile;
         String devname;
-        int total, full, empty;
+        int full, empty;
         byte bytes[] = new byte[CHUNK_SZ];
-        int idx, recvd;
+        int idx;
+        long total, recvd;
 
         devname = args[0];
         recvfile = args[1];
@@ -20,7 +21,7 @@ public class FTPRecv extends FTP {
 
         System.out.println("[RECV] Waiting for size from sender.");
         mem.waitEvent(sender);
-        total = mem.readInt(OFFSET(0));
+        total = mem.readLong(OFFSET(0));
         System.out.println("[RECV] Got size from sender: " + String.valueOf(total));
         mem.waitEventIrq(sender);
 

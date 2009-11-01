@@ -6,9 +6,10 @@ public class FTPSend extends FTP {
         MemAccess mem;
         String sendfile;
         String devname;
-        int total, full, empty;
+        int full, empty;
         byte bytes[] = new byte[CHUNK_SZ];
-        int idx, sent;
+        int idx;
+        long total, sent;
 
         devname = args[0];
         sendfile = args[1];
@@ -25,7 +26,7 @@ public class FTPSend extends FTP {
         mem.writeInt(15, EMPTY);
 
         System.out.println("[SEND] Sending size to sender: " + String.valueOf(total));
-        mem.writeInt(total, OFFSET(0));
+        mem.writeLong(total, OFFSET(0));
         mem.waitEventIrq(receiver);
         System.out.println("[SEND] Waiting for ack");
         mem.waitEvent(receiver);
