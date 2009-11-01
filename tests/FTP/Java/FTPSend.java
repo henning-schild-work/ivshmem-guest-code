@@ -18,7 +18,7 @@ public class FTPSend extends FTP {
         System.out.println("[SEND] Opening device " + devname);
         mem = new MemAccess(devname);
         FileInputStream file = new FileInputStream(sendfile);
-        total = (int)file.getChannel().size();
+        total = (long)file.getChannel().size();
 
         mem.initLock(FLOCK);
         mem.writeInt(0, FULL);
