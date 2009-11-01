@@ -22,6 +22,7 @@ public class FTPRecv extends FTP {
         mem.waitEvent(sender);
         total = mem.readInt(OFFSET(0));
         System.out.println("[RECV] Got size from sender: " + String.valueOf(total));
+        System.out.println("[RECV] TIME = " + System.currentTimeMillis());
         mem.waitEventIrq(sender);
 
         recvd = 0;
@@ -52,6 +53,7 @@ public class FTPRecv extends FTP {
        
         System.out.println("[RECV] Done, closing file and device.");
         file.getChannel().truncate(total);
+        System.out.println("[RECV] TIME = " + System.currentTimeMillis());
         file.close();
 
         mem.closeDevice();
