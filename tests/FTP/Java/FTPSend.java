@@ -35,7 +35,7 @@ public class FTPSend extends FTP {
             System.out.println("[SEND] Waiting for a client.");
             mem.waitEvent();
             /* Read the client's ID */
-            receiver = mem.readInt(SYNC(block) + CLIENT);
+            receiver = mem.readInt(SYNC(me) + CLIENT);
             System.out.println("[SEND] Got a client, it is VM number " + String.valueOf(receiver));
 
             /* Initialize the block data */
