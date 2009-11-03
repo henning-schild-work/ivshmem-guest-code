@@ -53,6 +53,7 @@ JNIEXPORT jint JNICALL Java_MemAccess_writeString (JNIEnv *env, jobject obj, jst
     const char *from = (*env)->GetStringUTFChars(env, towrite, NULL);
     int len = (*env)->GetStringLength(env, towrite);
     memcpy(to, from, len);
+    to[len] = '\0';
     (*env)->ReleaseStringUTFChars(env, towrite, from);
     return(0);
 }
