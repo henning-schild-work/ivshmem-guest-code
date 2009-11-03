@@ -86,12 +86,16 @@ JNIEXPORT jint JNICALL Java_MemAccess_spinUnlock (JNIEnv *env, jobject obj, jint
     return(0);
 }
 
-JNIEXPORT jint JNICALL Java_MemAccess_waitEvent (JNIEnv *env, jobject obj, jint machine) {
-    ivshmem_send(fd, WAIT_EVENT, machine);
+JNIEXPORT jint JNICALL Java_MemAccess_waitEvent (JNIEnv *env, jobject obj) {
+    ivshmem_send(fd, WAIT_EVENT, 0);
     return(0);
 }
 
 JNIEXPORT jint JNICALL Java_MemAccess_waitEventIrq (JNIEnv *env, jobject obj, jint machine) {
     ivshmem_send(fd, WAIT_EVENT_IRQ, machine);
     return(0);
+}
+
+JNIEXPORT jint JNICALL Java_MemAccess_getPosition (JNIEnv *env, jobject obj) {
+    return(ivshmem_recv(fd, GET_POSN));
 }

@@ -20,6 +20,7 @@ public class MemAccess {
     public native int initLock(int offset);
     public native int spinLock(int offset);
     public native int spinUnlock(int offset);
-    public native int waitEvent(int client);
+    public native int waitEvent();
     public native int waitEventIrq(int client);
+    public native int getPosition();
 }
