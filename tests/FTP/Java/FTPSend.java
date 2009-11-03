@@ -95,11 +95,10 @@ public class FTPSend extends FTP {
 
             System.out.println("[SEND] Done, closing file.");
             file.close();
+            /* Unlock my memory */
+            mem.spinUnlock(BASE(block) + LOCK);
         }
 
-        /* Unlock my memory */
-        mem.spinUnlock(BASE(block) + LOCK);
-        
         mem.closeDevice();
     }
 }
