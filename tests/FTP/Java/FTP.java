@@ -8,7 +8,7 @@
  */
 
 public abstract class FTP {
-    /* 14 512K chunks per block */
+    /* 14 + 1 512K chunks per block */
     protected static final int CHUNK_SZ = 512*1024;
     protected static final int NCHUNKS = 14;
     protected static final int BLOCK_SZ = CHUNK_SZ * (NCHUNKS + 1);
