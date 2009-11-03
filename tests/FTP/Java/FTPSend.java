@@ -21,6 +21,7 @@ public class FTPSend extends FTP {
 
         /* What is my VM number? */
         me = mem.getPosition();
+        System.out.println("[SEND] I am VM number " + String.valueOf(me));
 
         /* For now, we will always use the same block */
         mem.initLock(SYNC(me) + LOCK);

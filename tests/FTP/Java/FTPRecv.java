@@ -25,6 +25,7 @@ public class FTPRecv extends FTP {
 
         /* Indicate our interest */
         me = mem.getPosition();
+        System.out.println("[RECV] I am VM number " + String.valueOf(me) + " receiving from VM number " + String.valueOf(sender));
         while(mem.spinLock(SYNC(sender) + SLOCK) != 0);
         mem.writeInt(me, SYNC(sender) + CLIENT);
         mem.waitEventIrq(sender);
