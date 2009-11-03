@@ -1,21 +1,18 @@
 /* This class contains constants and "macros" for the FTP apps.
  * Memory is laid out as follows:
- * First chunk is for synchronization - 3 ints for each of 32 clients is only 384 bytse but we have memory to spare.
- * Next 480 chunks are 32 blocks of 15 chunks each.
+ * First chunk is for synchronization - 3 ints for each of 8 clients is only xxx bytes but we have memory to spare.
+ * Next xxx chunks are 32 blocks of n chunks each.
  *   - The first chunk contains locks and full/empty counts.
  *   - The other chunks are used for data transfer.
  * The rest of the memory is unused.
  */
 
 public abstract class FTP {
-    /* 14 + 1 512K chunks per block */
-    protected static final int CHUNK_SZ = 512*1024;
+    /* Chunks per block */
+    protected static final int CHUNK_SZ = 2*1024*1024;
     protected static final int NCHUNKS = 14;
     protected static final int BLOCK_SZ = CHUNK_SZ * (NCHUNKS + 1);
     
-    /* Maximum filename length is 4096 */
-    protected static final int MAX_PATH = 4096;
-
     /* Offsets for the synchronization memory */
     protected static final int SLOCK = 0;
     protected static final int BLK = 4;
