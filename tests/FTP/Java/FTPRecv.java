@@ -19,7 +19,7 @@ public class FTPRecv extends FTP {
         recvfile = args[1];
         sender = Integer.parseInt(args[2]);
 
-        System.out.println("[RECV] Starting at " + String.valueOf(System.currentTimeMillis));
+        System.out.println("[RECV] Starting at " + String.valueOf(System.currentTimeMillis()));
 
         //System.out.println("[RECV] Opening device " + devname);
         mem = new MemAccess(devname);
@@ -83,6 +83,6 @@ public class FTPRecv extends FTP {
 
         mem.closeDevice();
 
-        System.out.println("[RECV] Done at " + String.valueOf(System.currentTimeMillis));
+        System.out.println("[RECV] Done at " + String.valueOf(System.currentTimeMillis()));
     }
 }
