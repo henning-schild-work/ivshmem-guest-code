@@ -34,6 +34,7 @@ public class FTPRecv extends FTP {
 
         /* Read the block number and write the filename */
         block = mem.readInt(SYNC(sender) + BLK);
+        System.out.println("[RECV] Will be using block " + String.valueOf(block));
         fname = recvfile.getBytes();
         mem.writeBytes(fname, BASE(block) + FNAME, fname.length);
         mem.waitEventIrq(sender);
