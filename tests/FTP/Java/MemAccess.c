@@ -51,7 +51,8 @@ JNIEXPORT jint JNICALL Java_MemAccess_readBytes (JNIEnv *env, jobject obj, jbyte
 JNIEXPORT jint JNICALL Java_MemAccess_writeString (JNIEnv *env, jobject obj, jstring towrite, jint offset) {
     char *to = mem + offset;
     const char *from = (*env)->GetStringUTFChars(env, towrite, NULL);
-    memcpy(to, from, strlen(from));
+    int len = (*env)->GetStringLength(env, towrite);
+    memcpy(to, from, len);
     (*env)->ReleaseStringUTFChars(env, towrite, from);
     return(0);
 }
