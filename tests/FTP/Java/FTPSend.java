@@ -4,6 +4,7 @@ public class FTPSend extends FTP {
     public static void main(String args[]) throws Exception {
         int receiver;
         int me;
+        int block;
         MemAccess mem;
         String devname;
         String sendfile;
@@ -21,11 +22,12 @@ public class FTPSend extends FTP {
 
         /* What is my VM number? */
         me = mem.getPosition();
+        block = me - 1;
         System.out.println("[SEND] I am VM number " + String.valueOf(me));
 
         mem.initLock(SYNC(me) + SLOCK);
         /* For now, we will always use the same block */
-        mem.writeInt(me, SYNC(me) + BLK);
+        mem.writeInt(block, SYNC(me) + BLK);
        
         while(!quit) {
 
@@ -33,15 +35,15 @@ public class FTPSend extends FTP {
             System.out.println("[SEND] Waiting for a client.");
             mem.waitEvent();
             /* Read the client's ID */
-            receiver = mem.readInt(SYNC(me) + CLIENT);
+            receiver = mem.readInt(SYNC(block) + CLIENT);
             System.out.println("[SEND] Got a client, it is VM number " + String.valueOf(receiver));
 
             /* Initialize the block data */
-            mem.spinLock(BASE(me) + LOCK);
-            mem.initLock(BASE(me) + FLOCK);
-            mem.writeInt(NCHUNKS, BASE(me) + FULL);
-            mem.initLock(BASE(me) + ELOCK);
-            mem.writeInt(0, BASE(me) + EMPTY);
+            mem.spinLock(BASE(block) + LOCK);
+            mem.initLock(BASE(block) + FLOCK);
+            mem.writeInt(NCHUNKS, BASE(block) + FULL);
+            mem.initLock(BASE(block) + ELOCK);
+            mem.writeInt(0, BASE(block) + EMPTY);
 
             /* Already have the block number written, so irq the client immediately and wait for a filename */
             mem.waitEventIrq(receiver);
@@ -49,7 +51,7 @@ public class FTPSend extends FTP {
             mem.waitEvent();
 
             /* Read the filename */
-            mem.readBytes(fname, BASE(me) + FNAME, MAX_PATH);
+            mem.readBytes(fname, BASE(block) + FNAME, MAX_PATH);
             sendfile = new String(fname);
 
             /* Open the file and get its size */
@@ -58,7 +60,7 @@ public class FTPSend extends FTP {
 
             /* Send the size and wait for an ack */
             System.out.println("[SEND] Sending size to sender: " + String.valueOf(total));
-            mem.writeLong(total, BASE(me) + SIZE);
+            mem.writeLong(total, BASE(block) + SIZE);
             mem.waitEventIrq(receiver);
             System.out.println("[SEND] Waiting for ack");
             mem.waitEvent();
@@ -69,25 +71,25 @@ public class FTPSend extends FTP {
                 System.out.println("[SEND] Waiting for empty slot");
                 do {
                     Thread.sleep(50);
-                    empty = mem.readInt(BASE(me) + EMPTY);
+                    empty = mem.readInt(BASE(block) + EMPTY);
                 } while(empty == 0);
 
-                while(mem.spinLock(BASE(me) + ELOCK) != 0);
+                while(mem.spinLock(BASE(block) + ELOCK) != 0);
                 empty = empty - 1;
-                mem.writeInt(empty, BASE(me) + EMPTY);
-                mem.spinUnlock(BASE(me) + ELOCK);
+                mem.writeInt(empty, BASE(block) + EMPTY);
+                mem.spinUnlock(BASE(block) + ELOCK);
                 System.out.println("[SEND] Decremented empty to " + String.valueOf(empty));
 
                 file.read(bytes);
-                mem.writeBytes(bytes, OFFSET(me, idx), CHUNK_SZ);
+                mem.writeBytes(bytes, OFFSET(block, idx), CHUNK_SZ);
                 sent += CHUNK_SZ;
                 System.out.println("[SEND] Sent bytes in slot " + String.valueOf(idx) + " sent = " + String.valueOf(sent));
 
-                while(mem.spinLock(BASE(me) + FLOCK) != 0);
-                full = mem.readInt(BASE(me) + FULL);
+                while(mem.spinLock(BASE(block) + FLOCK) != 0);
+                full = mem.readInt(BASE(block) + FULL);
                 full = full + 1;
-                mem.writeInt(full, BASE(me) + FULL);
-                mem.spinUnlock(BASE(me) + FLOCK);
+                mem.writeInt(full, BASE(block) + FULL);
+                mem.spinUnlock(BASE(block) + FLOCK);
                 System.out.println("[SEND] Incremented full to " + String.valueOf(full));
             }
 
@@ -96,7 +98,7 @@ public class FTPSend extends FTP {
         }
 
         /* Unlock my memory */
-        mem.spinUnlock(BASE(me) + LOCK);
+        mem.spinUnlock(BASE(block) + LOCK);
         
         mem.closeDevice();
     }
