@@ -29,6 +29,7 @@ public class FTPRecv extends FTP {
         while(mem.spinLock(SYNC(sender) + SLOCK) != 0);
         mem.writeInt(me, SYNC(sender) + CLIENT);
         mem.waitEventIrq(sender);
+        System.out.println("[RECV] Waiting for the server to write a block number.");
         mem.waitEvent();
 
         /* Read the block number and write the filename */

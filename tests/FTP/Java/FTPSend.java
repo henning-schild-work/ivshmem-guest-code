@@ -23,16 +23,18 @@ public class FTPSend extends FTP {
         me = mem.getPosition();
         System.out.println("[SEND] I am VM number " + String.valueOf(me));
 
+        mem.initLock(SYNC(me) + SLOCK);
         /* For now, we will always use the same block */
-        mem.initLock(SYNC(me) + LOCK);
         mem.writeInt(me, SYNC(me) + BLK);
        
         while(!quit) {
 
             /* Wait for a client */
+            System.out.println("[SEND] Waiting for a client.");
             mem.waitEvent();
             /* Read the client's ID */
             receiver = mem.readInt(SYNC(me) + CLIENT);
+            System.out.println("[SEND] Got a client, it is VN number " + String.valueOf(receiver));
 
             /* Initialize the block data */
             mem.spinLock(BASE(me) + LOCK);
@@ -43,6 +45,7 @@ public class FTPSend extends FTP {
 
             /* Already have the block number written, so irq the client immediately and wait for a filename */
             mem.waitEventIrq(receiver);
+            System.out.println("[SEND] Waiting for client to write a filename.");
             mem.waitEvent();
 
             /* Read the filename */
