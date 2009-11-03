@@ -17,6 +17,8 @@ public class MemAccess {
     public native int readInt(int offset);
     public native int writeLong(long towrite, int offset);
     public native long readLong(int offset);
+    public native int writeString(String towrite, int offset);
+    public native String readString(int offset);
     public native int initLock(int offset);
     public native int spinLock(int offset);
     public native int spinUnlock(int offset);

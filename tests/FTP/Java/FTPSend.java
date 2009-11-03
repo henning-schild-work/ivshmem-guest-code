@@ -9,7 +9,6 @@ public class FTPSend extends FTP {
         String devname;
         String sendfile;
         int full, empty;
-        byte fname[] = new byte[MAX_PATH];
         byte bytes[] = new byte[CHUNK_SZ];
         int idx;
         long total, sent;
@@ -51,8 +50,7 @@ public class FTPSend extends FTP {
             mem.waitEvent();
 
             /* Read the filename */
-            mem.readBytes(fname, BASE(block) + FNAME, MAX_PATH);
-            sendfile = new String(fname);
+            sendfile = mem.readString(BASE(block) + FNAME);
 
             /* Open the file and get its size */
             FileInputStream file = new FileInputStream(sendfile);

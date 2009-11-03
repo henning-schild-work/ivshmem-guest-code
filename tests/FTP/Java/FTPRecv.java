@@ -10,7 +10,6 @@ public class FTPRecv extends FTP {
         String recvfile;
         String devname;
         int full, empty;
-        byte fname[];
         byte bytes[] = new byte[CHUNK_SZ];
         int idx;
         long total, recvd;
@@ -37,8 +36,7 @@ public class FTPRecv extends FTP {
         /* Read the block number and write the filename */
         block = mem.readInt(SYNC(sender) + BLK);
         //System.out.println("[RECV] Will be using block " + String.valueOf(block));
-        fname = recvfile.getBytes();
-        mem.writeBytes(fname, BASE(block) + FNAME, fname.length);
+        mem.writeString(recvfile, BASE(block) + FNAME);
         mem.waitEventIrq(sender);
         //System.out.println("[RECV] Waiting for size from sender.");
         mem.waitEvent();

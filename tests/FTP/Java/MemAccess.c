@@ -1,3 +1,4 @@
+#include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -45,6 +46,19 @@ JNIEXPORT jint JNICALL Java_MemAccess_readBytes (JNIEnv *env, jobject obj, jbyte
     char *from = mem + offset;
     (*env)->SetByteArrayRegion(env, bytes, 0, cnt, (jbyte *)from);
     return(0);
+}
+
+JNIEXPORT jint JNICALL Java_MemAccess_writeString (JNIEnv *env, jobject obj, jstring towrite, jint offset) {
+    char *to = mem + offset;
+    const char *from = (*env)->GetStringUTFChars(env, towrite, NULL);
+    memcpy(to, from, strlen(from));
+    (*env)->ReleaseStringUTFChars(env, towrite, from);
+    return(0);
+}
+
+JNIEXPORT jstring JNICALL Java_MemAccess_readString (JNIEnv *env, jobject obj, jint offset) {
+    const char *from = mem + offset;
+    return (*env)->NewString(env, (const jchar *)from, strlen(from));
 }
 
 JNIEXPORT jint JNICALL Java_MemAccess_writeInt (JNIEnv *env, jobject obj, jint towrite, jint offset) {
