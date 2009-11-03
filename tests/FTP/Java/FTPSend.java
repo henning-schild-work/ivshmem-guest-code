@@ -41,9 +41,9 @@ public class FTPSend extends FTP {
             /* Initialize the block data */
             mem.spinLock(BASE(block) + LOCK);
             mem.initLock(BASE(block) + FLOCK);
-            mem.writeInt(NCHUNKS, BASE(block) + FULL);
+            mem.writeInt(0, BASE(block) + FULL);
             mem.initLock(BASE(block) + ELOCK);
-            mem.writeInt(0, BASE(block) + EMPTY);
+            mem.writeInt(NCHUNKS, BASE(block) + EMPTY);
 
             /* Already have the block number written, so irq the client immediately and wait for a filename */
             mem.waitEventIrq(receiver);
