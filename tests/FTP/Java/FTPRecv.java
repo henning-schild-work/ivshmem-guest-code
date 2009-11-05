@@ -23,8 +23,6 @@ public class FTPRecv extends FTP {
         int idx;
         long total, recvd;
 
-        System.out.println("[RECV] Starting at " + String.valueOf(System.currentTimeMillis()));
-
         //System.out.println("[RECV] Opening device " + devname);
         FileOutputStream file = new FileOutputStream((new File(recvfile)).getName());
 
@@ -68,6 +66,7 @@ public class FTPRecv extends FTP {
             file.write(bytes, 0, CHUNK_SZ);
             recvd += CHUNK_SZ;
             //System.out.println("[RECV] Read bytes in slot " + String.valueOf(idx) + " recvd =  " + String.valueOf(recvd));
+            System.out.println("[RECV] " + String.valueOf(recvd) + "B / " + String.valueOf(total) + "B = " + String.valueOf((float)recvd / (float)total * 100.0) + "%");
 
             while(mem.spinLock(BASE(block) + ELOCK) != 0);
             empty = mem.readInt(BASE(block) + EMPTY);
@@ -84,7 +83,5 @@ public class FTPRecv extends FTP {
         mem.spinUnlock(SYNC(sender) + SLOCK);
 
         mem.closeDevice();
-
-        System.out.println("[RECV] Done at " + String.valueOf(System.currentTimeMillis()));
     }
 }

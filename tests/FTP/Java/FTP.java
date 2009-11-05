@@ -46,6 +46,11 @@ public abstract class FTP {
         /* Calculate sizes */
         BLOCK_SZ = (int)(msize / nblocks);
         CHUNK_SZ = BLOCK_SZ / (nchunks + 1);
+
+        System.out.println("[FTP] Initialized.");
+        System.out.println("\tMemory: " + String.valueOf(MSIZE) + "MB");
+        System.out.println("\tBlocks: " + String.valueOf(NBLOCKS) + " x " + String.valueOf(BLOCK_SZ) + "B");
+        System.out.println("\tChunks: " + String.valueOf(NCHUNKS) + " x " + String.valueOf(CHUNK_SZ) + "B per block");
     }
 
     protected int NEXT(int i) {
