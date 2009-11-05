@@ -3,25 +3,29 @@ import java.io.File;
 
 public class FTPRecv extends FTP {
     public static void main(String args[]) throws Exception {
-        int sender;
+        String devname = args[0];
+        int msize = Integer.parseInt(args[1]);
+        int nblocks = Integer.parseInt(args[2]);
+        int nchunks = Integer.parseInt(args[3]);
+        String recvfile = args[4];
+        int sender = Integer.parseInt(args[5]);
+
+        FTPRecv r = new FTPRecv(devname, msize, nblocks, nchunks, recvfile, sender);
+    }
+
+    public FTPRecv(String devname, int msize, int nblocks, int nchunks, String recvfile, int sender) throws Exception {
+        super(devname, msize, nblocks, nchunks);
+
         int block;
         int me;
-        MemAccess mem;
-        String recvfile;
-        String devname;
         int full, empty;
         byte bytes[] = new byte[CHUNK_SZ];
         int idx;
         long total, recvd;
 
-        devname = args[0];
-        recvfile = args[1];
-        sender = Integer.parseInt(args[2]);
-
         System.out.println("[RECV] Starting at " + String.valueOf(System.currentTimeMillis()));
 
         //System.out.println("[RECV] Opening device " + devname);
-        mem = new MemAccess(devname);
         FileOutputStream file = new FileOutputStream((new File(recvfile)).getName());
 
         /* Indicate our interest */

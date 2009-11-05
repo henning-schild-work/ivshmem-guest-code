@@ -2,11 +2,20 @@ import java.io.FileInputStream;
 
 public class FTPSend extends FTP {
     public static void main(String args[]) throws Exception {
+        String devname = args[0];
+        int msize = Integer.parseInt(args[1]);
+        int nblocks = Integer.parseInt(args[2]);
+        int nchunks = Integer.parseInt(args[3]);
+
+        FTPSend s = new FTPSend(devname, msize, nblocks, nchunks);
+    }
+
+    public FTPSend(String devname, int msize, int nblocks, int nchunks) throws Exception {
+        super(devname, msize, nblocks, nchunks);
+
         int receiver;
         int me;
         int block;
-        MemAccess mem;
-        String devname;
         String sendfile;
         int full, empty;
         byte bytes[] = new byte[CHUNK_SZ];
@@ -14,10 +23,7 @@ public class FTPSend extends FTP {
         long total, sent;
         boolean quit = false;
 
-        devname = args[0];
-
         System.out.println("[SEND] Opening device " + devname);
-        mem = new MemAccess(devname);
 
         /* What is my VM number? */
         me = mem.getPosition();

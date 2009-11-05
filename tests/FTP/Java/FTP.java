@@ -8,41 +8,62 @@
  */
 
 public abstract class FTP {
+    /* Memory device */
+    MemAccess mem;
+
     /* Chunks per block */
-    protected static final int CHUNK_SZ = 4*1024*1024;
-    protected static final int NCHUNKS = 7;
-    protected static final int BLOCK_SZ = CHUNK_SZ * (NCHUNKS + 1);
+    protected final long MSIZE;
+    protected final int NBLOCKS;
+    protected final int NCHUNKS;
+    protected final int CHUNK_SZ;
+    protected final int BLOCK_SZ;
     
     /* Offsets for the synchronization memory */
-    protected static final int SLOCK = 0;
-    protected static final int BLK = 4;
-    protected static final int CLIENT = 8;
+    protected final int SLOCK = 0;
+    protected final int BLK = 4;
+    protected final int CLIENT = 8;
 
     /* Offsets for the block memory */
-    protected static final int LOCK = 0;
-    protected static final int FLOCK = 4;
-    protected static final int FULL = 8;
-    protected static final int ELOCK = 12;
-    protected static final int EMPTY = 16;
-    protected static final int SIZE = 20;
-    protected static final int FNAME = 28;
+    protected final int LOCK = 0;
+    protected final int FLOCK = 4;
+    protected final int FULL = 8;
+    protected final int ELOCK = 12;
+    protected final int EMPTY = 16;
+    protected final int SIZE = 20;
+    protected final int FNAME = 28;
 
-    protected static int NEXT(int i) {
+    public FTP(String devname, long msize, int nblocks, int nchunks) throws Exception {
+        mem = new MemAccess(devname);
+
+        MSIZE = msize;
+        NBLOCKS = nblocks;
+        NCHUNKS = nchunks;
+
+        /* Convert mem size to MB */
+        msize *= 1024*1024;
+        /* Reserve space for sync data */
+        msize -= 256;
+        /* Calculate sizes */
+        BLOCK_SZ = (int)(msize / nblocks);
+        CHUNK_SZ = BLOCK_SZ / (nchunks + 1);
+    }
+
+    protected int NEXT(int i) {
         return (i + 1) % NCHUNKS;
     }
 
     /* The base address of block blk */
-    protected static int BASE(int blk) {
+    protected int BASE(int blk) {
         return CHUNK_SZ + BLOCK_SZ * blk;
     }
 
     /* Offset based on the block and chunk numbers */
-    protected static int OFFSET(int blk, int i) {
+    protected int OFFSET(int blk, int i) {
         return CHUNK_SZ + BLOCK_SZ * blk + CHUNK_SZ * (i + 1);
     }
 
     /* The syncronization block for machine i */
-    protected static int SYNC(int i) {
+    protected int SYNC(int i) {
         return 12*(i-1);
     }
 }
