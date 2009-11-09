@@ -1,5 +1,7 @@
 import java.io.FileInputStream;
 
+import org.ualberta.shm.MemAccess;
+
 public class FTPSend extends FTP {
     public static void main(String args[]) throws Exception {
         String devname = args[0];

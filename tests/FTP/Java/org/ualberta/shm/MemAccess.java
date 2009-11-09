@@ -1,3 +1,5 @@
+package org.ualberta.shm;
+
 public class MemAccess {
     static {
         System.loadLibrary("MemAccess");

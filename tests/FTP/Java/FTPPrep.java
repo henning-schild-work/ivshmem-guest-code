@@ -1,3 +1,5 @@
+import org.ualberta.shm.MemAccess;
+
 public class FTPPrep extends FTP {
     public FTPPrep(String devname, long msize, int nblocks, int nchunks) throws Exception {
         super(devname, msize, nblocks, nchunks);

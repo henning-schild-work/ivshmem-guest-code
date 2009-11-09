@@ -1,6 +1,8 @@
 import java.io.FileOutputStream;
 import java.io.File;
 
+import org.ualberta.shm.MemAccess;
+
 public class FTPRecv extends FTP {
     public static void main(String args[]) throws Exception {
         String devname = args[0];

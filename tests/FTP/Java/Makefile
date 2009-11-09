@@ -2,16 +2,17 @@ CC=gcc
 JAVA_HOME=/usr/lib/jvm/jdk1.6.0_14
 CFLAGS=-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC -shared -Wall -D_GNU_SOURCE
 
-all: libMemAccess.so FTPRecv.class FTPSend.class FTPPrep.class
+all: libMemAccess.so org/ualberta/shm/Handler.class FTPSend.class FTPRecv.class FTPPrep.class Getter.class
+
+libMemAccess.so: org_ualberta_shm_MemAccess.h
+	$(CC) $(CFLAGS) -o libMemAccess.so MemAccess.c ivshmem.c
+
+org_ualberta_shm_MemAccess.h: org/ualberta/shm/MemAccess.class
+	javah -jni org.ualberta.shm.MemAccess
 
 %.class: %.java
 	javac $<
 
-MemAccess.h: MemAccess.class
-	javah -jni MemAccess
-
-libMemAccess.so: MemAccess.h MemAccess.c ivshmem.c ivshmem.h
-	$(CC) $(CFLAGS) -o libMemAccess.so MemAccess.c ivshmem.c
-
 clean:
-	-rm -f *.so *.class MemAccess.h
+	find . -name '*.class' -exec rm {} \;
+	-rm -f *.so org_ualberta_shm_MemAccess.h

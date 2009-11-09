@@ -7,6 +7,8 @@
  * The rest of the memory is unused.
  */
 
+import org.ualberta.shm.MemAccess;
+
 public abstract class FTP {
     /* Memory device */
     MemAccess mem;
