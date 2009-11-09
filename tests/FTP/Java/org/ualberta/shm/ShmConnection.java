@@ -47,7 +47,8 @@ public class ShmConnection extends URLConnection {
         _inputStream = new ShmInputStream(_mem, u.getFile(), sender);
     }
 
-    public InputStream getInputStream() {
+    public InputStream getInputStream() throws IOException {
+        connect();
         return _inputStream;
     }
 }

@@ -56,6 +56,7 @@ public class ShmInputStream extends InputStream {
 
         /* Figure out which block we're using */
         _block = _mem.readInt(SYNC(sender) + BLK);
+        System.out.println("Using block " + String.valueOf(_block));
         /* Request the file */
         _mem.writeString(_fname, BASE(_block) + FNAME);
         _mem.waitEventIrq(sender);
@@ -67,7 +68,7 @@ public class ShmInputStream extends InputStream {
 
         _recvd = 0;
         _idx = 0;
-        _mark = 0;
+        _mark = CHUNK_SZ;
 
         _mem.spinUnlock(SYNC(sender) + SLOCK);
     }
