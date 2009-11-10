@@ -1,8 +1,9 @@
 package org.ualberta.shm;
 
 import java.io.FileInputStream;
+import java.lang.Runnable;
 
-public class ShmServer extends Shm {
+public class ShmServer extends Shm implements Runnable {
     public static void main(String args[]) throws Exception {
         String devname = args[0];
         int msize = Integer.parseInt(args[1]);
@@ -10,11 +11,22 @@ public class ShmServer extends Shm {
         int nchunks = Integer.parseInt(args[3]);
 
         ShmServer s = new ShmServer(devname, msize, nblocks, nchunks);
+        s.run();
     }
 
     public ShmServer(String devname, int msize, int nblocks, int nchunks) throws Exception {
         super(devname, msize, nblocks, nchunks);
+    }
 
+    public void run() {
+        try {
+            doRun();
+        } catch(Exception e) {
+            return;
+        }
+    }
+
+    private void doRun() throws Exception {
         int receiver;
         int me;
         int block;
