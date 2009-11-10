@@ -1,5 +1,3 @@
-package org.ualberta.shm;
-
 /* This class contains constants and "macros" for the FTP apps.
  * Memory is laid out as follows:
  * First chunk is for synchronization - 3 ints for each of 8 clients is only xxx bytes but we have memory to spare.
@@ -9,9 +7,11 @@ package org.ualberta.shm;
  * The rest of the memory is unused.
  */
 
-public class Shm {
+import org.ualberta.shm.MemAccess;
+
+public abstract class FTP {
     /* Memory device */
-    MemAccess _mem;
+    MemAccess mem;
 
     /* Chunks per block */
     protected final long MSIZE;
@@ -34,8 +34,8 @@ public class Shm {
     protected final int SIZE = 20;
     protected final int FNAME = 28;
 
-    public Shm(String devname, long msize, int nblocks, int nchunks) throws Exception {
-        _mem = new MemAccess(devname);
+    public FTP(String devname, long msize, int nblocks, int nchunks) throws Exception {
+        mem = new MemAccess(devname);
 
         MSIZE = msize;
         NBLOCKS = nblocks;
@@ -49,17 +49,10 @@ public class Shm {
         BLOCK_SZ = (int)(msize / nblocks);
         CHUNK_SZ = BLOCK_SZ / (nchunks + 1);
 
-        System.out.println("[SHM] Initialized.");
+        System.out.println("[FTP] Initialized.");
         System.out.println("\tMemory: " + String.valueOf(MSIZE) + "MB");
         System.out.println("\tBlocks: " + String.valueOf(NBLOCKS) + " x " + String.valueOf(BLOCK_SZ) + "B");
         System.out.println("\tChunks: " + String.valueOf(NCHUNKS) + " x " + String.valueOf(CHUNK_SZ) + "B per block");
-    }
-
-    public void prep() throws Exception {
-        for(int i = 1; i <= NBLOCKS; i++) {
-            _mem.initLock(SYNC(i) + SLOCK);
-            _mem.initLock(BASE(i - 1) + LOCK);
-        }
     }
 
     protected int NEXT(int i) {
