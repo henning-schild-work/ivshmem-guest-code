@@ -15,7 +15,9 @@ public class Getter {
 
         do {
             rd = is.read(buf);
-            out.write(buf, 0, rd);
+            if(rd > 0) {
+                out.write(buf, 0, rd);
+            }
         } while(rd >= 0);
 
         out.close();
