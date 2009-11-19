@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.Runnable;
 
-public class ShmServer extends Shm implements Runnable {
+private class ShmServer extends Shm implements Runnable {
     public static void main(String args[]) throws Exception {
         String devname = args[0];
         int msize = Integer.parseInt(args[1]);
@@ -15,8 +15,8 @@ public class ShmServer extends Shm implements Runnable {
         s.run();
     }
 
-    public ShmServer(String devname, int msize, int nblocks, int nchunks) throws IOException {
-        super(devname, msize, nblocks, nchunks);
+    public ShmServer(String devname, int msize, int nblocks, int nchunks, int nmachines) throws IOException {
+        super(devname, msize, nblocks, nchunks, nmachines);
     }
 
     public void run() {
@@ -28,101 +28,95 @@ public class ShmServer extends Shm implements Runnable {
     }
 
     private void doRun() throws IOException {
-        int receiver;
         int me;
         int block;
         String sendfile;
-        int full, empty;
-        byte bytes[] = new byte[CHUNK_SZ];
-        int idx;
-        long total, sent;
         boolean quit = false;
-
-        //System.out.println("[SEND] Opening device " + devname);
+        byte[] bytes = new byte[64*1024];
 
         /* What is my VM number? */
         me = _mem.getPosition();
-        block = me - 1;
-        //System.out.println("[SEND] I am VM number " + String.valueOf(me));
+        _mem.writeInt(-1, SYNC(me) + BLK);
+        LOG.info("[SHM] I am VM number " + String.valueOf(me));
 
-        _mem.initLock(SYNC(me) + SLOCK);
-        /* For now, we will always use the same block */
-        _mem.writeInt(block, SYNC(me) + BLK);
-       
         while(!quit) {
 
             /* Wait for a client */
-            //System.out.println("[SEND] Waiting for a client.");
-            _mem.waitEvent();
-            /* Read the client's ID */
-            receiver = _mem.readInt(SYNC(me) + CLIENT);
-            //System.out.println("[SEND] Got a client, it is VM number " + String.valueOf(receiver));
+            LOG.info("[SHM] Waiting for a client.");
+            do {
+                block = _mem.readInt(SYNC(me) + BLK);
+            } while(block == -1);
 
-            /* Initialize the block data */
-            _mem.spinLock(BASE(block) + LOCK);
-            _mem.initLock(BASE(block) + FLOCK);
-            _mem.writeInt(0, BASE(block) + FULL);
-            _mem.initLock(BASE(block) + ELOCK);
-            _mem.writeInt(NCHUNKS, BASE(block) + EMPTY);
-
-            /* Already have the block number written, so irq the client immediately and wait for a filename */
-            _mem.waitEventIrq(receiver);
-            //System.out.println("[SEND] Waiting for client to write a filename.");
-            _mem.waitEvent();
+            LOG.info("[SHM] Got a client with block " + String.valueOf(block));
 
             /* Read the filename */
             sendfile = _mem.readString(BASE(block) + FNAME);
+            LOG.info("[SHM] Client sent filename: " + sendfile);
 
-            /* Open the file and get its size */
-            FileInputStream file = new FileInputStream(sendfile);
-            total = (long)file.getChannel().size();
+            Hashtable<String, String[]> query = HttpUtils.parseQueryString(sendfile);
+            String jobId = query.get("job")[0];
+            int reduce = Integer.parseInt(query.get("reduce")[0]);
+            StringTokenizer itr = new StringTokenizer(query.get("map")[0], ",");
 
-            /* Send the size and wait for an ack */
-            //System.out.println("[SEND] Sending size to sender: " + String.valueOf(total));
-            _mem.writeLong(total, BASE(block) + SIZE);
-            _mem.waitEventIrq(receiver);
-            //System.out.println("[SEND] Waiting for ack");
-            _mem.waitEvent();
+            JobConf conf = (JobConf)server.getAttribute("conf");
+            LocalDirAllocator lDirAlloc = (LocalDirAllocator)server.getAttribute("localDirAllocator");
+            FileSystem rfs = ((LocalFileSystem)server.getAttribute("local.file.system")).getRaw();
+            TaskTracker tracker = (TaskTracker)server.getAttribute("task.tracker");
 
-            System.out.println("[SEND] Sending " + sendfile + " to client " + String.valueOf(receiver));
-
-            /* Do the send! */
-            sent = 0;
-            for(idx = 0; sent < total; idx = NEXT(idx)) {
-                //System.out.println("[SEND] Waiting for empty slot");
-                do {
-                    try {
-                        Thread.sleep(50);
-                    } catch(Exception e) { }
-                    empty = _mem.readInt(BASE(block) + EMPTY);
-                } while(empty == 0);
-
-                while(_mem.spinLock(BASE(block) + ELOCK) != 0);
-                empty = empty - 1;
-                _mem.writeInt(empty, BASE(block) + EMPTY);
-                _mem.spinUnlock(BASE(block) + ELOCK);
-                //System.out.println("[SEND] Decremented empty to " + String.valueOf(empty));
-
-                file.read(bytes);
-                _mem.writeBytes(bytes, OFFSET(block, idx), CHUNK_SZ);
-                sent += CHUNK_SZ;
-                //System.out.println("[SEND] Sent bytes in slot " + String.valueOf(idx) + " sent = " + String.valueOf(sent));
-                System.out.println("[SEND] " + sent + "B / " + total + "B = " + String.valueOf((float)sent / (float)total * 100.0) + "%");
-
-                while(_mem.spinLock(BASE(block) + FLOCK) != 0);
-                full = _mem.readInt(BASE(block) + FULL);
-                full = full + 1;
-                _mem.writeInt(full, BASE(block) + FULL);
-                _mem.spinUnlock(BASE(block) + FLOCK);
-                //System.out.println("[SEND] Incremented full to " + String.valueOf(full));
+            String userName = null;
+            synchronized (tracker.runningJobs) {
+                RunningJob rjob = tracker.runningJobs.get(JobID.forName(jobId));
+                if (rjob == null) {
+                    throw new IOException("Unknown job " + jobId + "!!");
+                }
+                userName = rjob.jobConf.getUser();
             }
 
-            //System.out.println("[SEND] Done, closing file.");
-            file.close();
-            /* Unlock my memory */
-            _mem.spinUnlock(BASE(block) + LOCK);
+            ShmOutputStream shmout = new ShmOutputStream(this, block);
+            DataOutputStream dataout = new DataOutputStream(shmout);
+
+            itr = new StringTokenizer(query.get("map")[0], ",");
+            while(itr.hasMoreTokens()) {
+                String mapId = itr.nextToken();
+                
+                LOG.info("[SHM] Reading map output " + mapId);
+
+                Path mapOutputFileName = lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir( userName, jobId, mapId) + "/file.out", conf);
+                Path indexFileName = lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir( userName, jobId, mapId) + "/file.out.index", conf);
+                IndexRecord info = tracker.indexCache.getIndexInformation(mapId, reduce, indexFileName);
+                FSDataInputStream mapOutputIn = rfs.open(mapOutputFileName);
+                mapOutputIn.seek(info.startOffset);
+
+                ShuffleHeader hdr = new ShuffleHeader(mapId, info.partLength, info.rawLength, reduce);
+                hdr.write(dataout);
+
+                long rem = info.partLength;
+                int len = mapOutputIn.read(bytes, 0, (int)Math.min(rem, CHUNK_SZ));
+                long now = 0;
+                while (len >= 0) {
+                    rem -= len;
+                    if (len > 0) {
+                        shmout.write(bytes, 0, len);
+                    } else {
+                        LOG.info("Skipped zero-length read of map " + mapId + 
+                                " to reduce " + reduce);
+                    }
+                    if (rem == 0) {
+                        break;
+                    }
+                    len = mapOutputIn.read(bytes, 0, (int)Math.min(rem, CHUNK_SZ));
+                }
+
+                mapOutputIn.close();
+            }
+
+            _mem.writeInt(-1, SYNC(me) + BLK);
+            dataout.close();
+            shmout.close();
+            LOG.info("[SHM] Done sending map outputs.");
         }
 
         _mem.closeDevice();
     }
+  }
 }
