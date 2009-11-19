@@ -95,7 +95,7 @@ JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_spinLock (JNIEnv *env, jo
     return(0);
 }
 
-JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_spinLock (JNIEnv *env, jobject obj, jint offset) {
+JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_spinTrylock (JNIEnv *env, jobject obj, jint offset) {
     pthread_spinlock_t *sl = (pthread_spinlock_t *)(mem + offset);
     return(pthread_spin_trylock(sl));
 }
