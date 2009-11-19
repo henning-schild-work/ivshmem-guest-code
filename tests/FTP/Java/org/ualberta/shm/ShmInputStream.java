@@ -20,7 +20,7 @@ public class ShmInputStream extends InputStream {
         super();
 
         _shm = m;
-        _mem = _mem;
+        _mem = _shm._mem;
         _fname = fname;
         _sender = sender;
         _buf = new byte[_shm.DATA_SZ];
