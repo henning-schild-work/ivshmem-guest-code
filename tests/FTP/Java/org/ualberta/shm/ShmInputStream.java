@@ -55,6 +55,7 @@ public class ShmInputStream extends InputStream {
     }
 
     public void close() throws IOException {
+        System.out.println("[SHM] Cleaning up...");
         _mem.writeInt(-1, _shm.SYNC(_sender) + _shm.BLK);
         _mem.spinUnlock(_shm.SYNC(_sender) + _shm.SLOCK);
         _mem.spinUnlock(_shm.BASE(_block) + _shm.LOCK);
