@@ -51,7 +51,7 @@ public class ShmServer extends Shm implements Runnable {
             System.out.println("[SHM] Got a client with block " + String.valueOf(block));
 
             /* Read the filename */
-            sendfile = _mem.readString(BASE(block) + FNAME);
+            sendfile = _mem.readString(SYNC(me) + FNAME);
             System.out.println("[SHM] Client sent filename: " + sendfile);
 
             ShmOutputStream shmout = new ShmOutputStream(this, block);
