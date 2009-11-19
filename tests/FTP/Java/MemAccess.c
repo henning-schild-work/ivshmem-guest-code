@@ -36,9 +36,9 @@ JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_closeDevice (JNIEnv *env,
     return(0);
 }
 
-JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_writeBytes (JNIEnv *env, jobject obj, jbyteArray bytes, jint offset, jint cnt) {
+JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_writeBytes (JNIEnv *env, jobject obj, jbyteArray bytes, jint foff, jint offset, jint cnt) {
     char *to = mem + offset;
-    (*env)->GetByteArrayRegion(env, bytes, 0, cnt, (jbyte *)to);
+    (*env)->GetByteArrayRegion(env, bytes, foff, cnt, (jbyte *)to);
     return(0);
 }
 

@@ -1,6 +1,7 @@
 package org.ualberta.shm;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.Runnable;
 
 public class ShmServer extends Shm implements Runnable {
@@ -14,7 +15,7 @@ public class ShmServer extends Shm implements Runnable {
         s.run();
     }
 
-    public ShmServer(String devname, int msize, int nblocks, int nchunks) throws Exception {
+    public ShmServer(String devname, int msize, int nblocks, int nchunks) throws IOException {
         super(devname, msize, nblocks, nchunks);
     }
 
@@ -26,7 +27,7 @@ public class ShmServer extends Shm implements Runnable {
         }
     }
 
-    private void doRun() throws Exception {
+    private void doRun() throws IOException {
         int receiver;
         int me;
         int block;
@@ -90,7 +91,9 @@ public class ShmServer extends Shm implements Runnable {
             for(idx = 0; sent < total; idx = NEXT(idx)) {
                 //System.out.println("[SEND] Waiting for empty slot");
                 do {
-                    Thread.sleep(50);
+                    try {
+                        Thread.sleep(50);
+                    } catch(Exception e) { }
                     empty = _mem.readInt(BASE(block) + EMPTY);
                 } while(empty == 0);
 

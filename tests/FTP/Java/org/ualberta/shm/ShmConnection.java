@@ -10,7 +10,7 @@ import java.net.URL;
 
 public class ShmConnection extends URLConnection {
     private static Map<String, Integer> _shmHosts;
-    private static MemAccess _mem;
+    private static Shm _shm;
 
     private ShmInputStream _inputStream;
 
@@ -21,10 +21,10 @@ public class ShmConnection extends URLConnection {
     public void connect() throws IOException {
         URL u = this.getURL();
         
-        if(_mem == null) {
+        if(_shm == null) {
             /* TODO: Parmaeterize the device name */
             try {
-                _mem = new MemAccess("/dev/kvm_ivshmem");
+                _shm = new Shm("/dev/kvm_ivshmem", 256, 5, 5, 3);
             } catch (Exception e) {
                 throw new IOException("Error creating memory device.");
             }
@@ -36,6 +36,9 @@ public class ShmConnection extends URLConnection {
             _shmHosts.put("10.111.111.165", 1);
             _shmHosts.put("10.111.111.188", 2);
             _shmHosts.put("10.111.111.140", 3);
+            _shmHosts.put("f11a", 1);
+            _shmHosts.put("f11b", 2);
+            _shmHosts.put("f11c", 3);
         }
 
         if(!_shmHosts.containsKey(u.getHost())) {
@@ -44,7 +47,7 @@ public class ShmConnection extends URLConnection {
 
         int sender = _shmHosts.get(u.getHost()).intValue();
 
-        _inputStream = new ShmInputStream(_mem, u.getFile(), sender);
+        _inputStream = new ShmInputStream(_shm, u.getQuery(), sender);
     }
 
     public InputStream getInputStream() throws IOException {

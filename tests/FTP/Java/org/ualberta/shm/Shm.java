@@ -1,29 +1,28 @@
 package org.ualberta.shm;
 
-/* This class contains constants and "macros" for the FTP apps.
- * Memory is laid out as follows:
- * First chunk is for synchronization - 3 ints for each of 8 clients is only xxx bytes but we have memory to spare.
- * Next xxx chunks are 32 blocks of n chunks each.
- *   - The first chunk contains locks and full/empty counts.
- *   - The other chunks are used for data transfer.
- * The rest of the memory is unused.
- */
+import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+/* This class contains constants and "macros" for the FTP apps. */
 
 public class Shm {
     /* Memory device */
-    MemAccess _mem;
+    protected MemAccess _mem;
 
     /* Chunks per block */
     protected final long MSIZE;
     protected final int NBLOCKS;
     protected final int NCHUNKS;
     protected final int CHUNK_SZ;
+    protected final int DATA_SZ;
     protected final int BLOCK_SZ;
-    
+    protected final int NMACHINES;
+ 
     /* Offsets for the synchronization memory */
     protected final int SLOCK = 0;
     protected final int BLK = 4;
-    protected final int CLIENT = 8;
+    protected final int FNAME = 8;
 
     /* Offsets for the block memory */
     protected final int LOCK = 0;
@@ -31,15 +30,18 @@ public class Shm {
     protected final int FULL = 8;
     protected final int ELOCK = 12;
     protected final int EMPTY = 16;
-    protected final int SIZE = 20;
-    protected final int FNAME = 28;
 
-    public Shm(String devname, long msize, int nblocks, int nchunks) throws Exception {
+    /* Offsets in the chunk */
+    protected final int SIZE = 0;
+    protected final int DATA = 4;
+
+    public Shm(String devname, long msize, int nblocks, int nchunks, int nmachines) throws IOException {
         _mem = new MemAccess(devname);
 
         MSIZE = msize;
         NBLOCKS = nblocks;
         NCHUNKS = nchunks;
+        NMACHINES = nmachines;
 
         /* Convert mem size to MB */
         msize *= 1024*1024;
@@ -48,18 +50,30 @@ public class Shm {
         /* Calculate sizes */
         BLOCK_SZ = (int)(msize / nblocks);
         CHUNK_SZ = BLOCK_SZ / (nchunks + 1);
+        DATA_SZ = CHUNK_SZ - 4;
 
-        System.out.println("[SHM] Initialized.");
-        System.out.println("\tMemory: " + String.valueOf(MSIZE) + "MB");
-        System.out.println("\tBlocks: " + String.valueOf(NBLOCKS) + " x " + String.valueOf(BLOCK_SZ) + "B");
-        System.out.println("\tChunks: " + String.valueOf(NCHUNKS) + " x " + String.valueOf(CHUNK_SZ) + "B per block");
+        Log LOG = LogFactory.getLog(Shm.class);
+
+        LOG.info("[SHM] Initialized.");
+        LOG.info("\tMemory: " + String.valueOf(MSIZE) + "MB");
+        LOG.info("\tBlocks: " + String.valueOf(NBLOCKS) + " x " + String.valueOf(BLOCK_SZ) + "B");
+        LOG.info("\tChunks: " + String.valueOf(NCHUNKS) + " x " + String.valueOf(CHUNK_SZ) + "B per block");
     }
 
-    public void prep() throws Exception {
-        for(int i = 1; i <= NBLOCKS; i++) {
+    public void prep() throws IOException {
+        /* Initialize the sync memory for the senders */
+        for(int i = 1; i <= NMACHINES; i++) {
             _mem.initLock(SYNC(i) + SLOCK);
-            _mem.initLock(BASE(i - 1) + LOCK);
+            _mem.writeInt(-1, SYNC(i) + BLK);
         }
+
+        /* Initialize the block locks */
+        for(int i = 0; i < NBLOCKS; i++) {
+            _mem.initLock(BASE(i) + LOCK);
+        }
+
+        /* Initialize the free blocks semaphore */
+        _mem.setSema(NBLOCKS);
     }
 
     protected int NEXT(int i) {
@@ -76,8 +90,8 @@ public class Shm {
         return CHUNK_SZ + BLOCK_SZ * blk + CHUNK_SZ * (i + 1);
     }
 
-    /* The syncronization block for machine i */
+    /* The syncronization block for sender i */
     protected int SYNC(int i) {
-        return 12*(i-1);
+        return 1024*(i-1);
     }
 }
