@@ -13,10 +13,10 @@ public class Getter {
         FileOutputStream out = new FileOutputStream((new File(u.getFile())).getName());
         InputStream is = u.openStream();
 
-        while(is.available() > 0) {
+        do {
             rd = is.read(buf);
             out.write(buf, 0, rd);
-        }
+        } while(rd >= 0);
 
         out.close();
         is.close();
