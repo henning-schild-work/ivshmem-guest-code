@@ -25,7 +25,8 @@ public class ShmOutputStream extends OutputStream {
         int written = 0;
         int pos = offset;
         int cur;
-        int full, empty;
+        int full, empty = 0;
+        int havelock = -1;
 
         while(written < len) {
             if(len - written < _shm.DATA_SZ) {
@@ -36,10 +37,15 @@ public class ShmOutputStream extends OutputStream {
 
             do {
                 Thread.yield();
-                empty = _mem.readInt(_shm.BASE(_block) + _shm.EMPTY);
-            } while(empty == 0);
+                havelock = _mem.spinTrylock(_shm.BASE(_block) + _shm.ELOCK);
+                if(havelock == 0) {
+                    empty = _mem.readInt(_shm.BASE(_block) + _shm.EMPTY);
+                    if(empty == 0) {
+                        _mem.spinUnlock(_shm.BASE(_block) + _shm.ELOCK);
+                    }
+                }
+            } while(empty == 0 || havelock != 0);
 
-            _mem.spinLock(_shm.BASE(_block) + _shm.ELOCK);
             empty = empty - 1;
             _mem.writeInt(empty, _shm.BASE(_block) + _shm.EMPTY);
             _mem.spinUnlock(_shm.BASE(_block) + _shm.ELOCK);

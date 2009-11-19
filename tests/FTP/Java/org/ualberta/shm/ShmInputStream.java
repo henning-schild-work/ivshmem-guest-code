@@ -26,13 +26,15 @@ public class ShmInputStream extends InputStream {
         _buf = new byte[_shm.DATA_SZ];
 
         /* Find a free block */
-        _mem.downSema();
-        for(_block = 0; _block < _shm.NBLOCKS; _block++) {
-            System.out.println("[SHM] Trying block " + String.valueOf(_block));
-            if(_mem.spinTrylock(_shm.BASE(_block) + _shm.LOCK) == 0) {
-                break;
+        //_mem.downSema();
+        do {
+            for(_block = 0; _block < _shm.NBLOCKS; _block++) {
+                System.out.println("[SHM] Trying block " + String.valueOf(_block));
+                if(_mem.spinTrylock(_shm.BASE(_block) + _shm.LOCK) == 0) {
+                    break;
+                }
             }
-        }
+        } while(_block == _shm.NBLOCKS);
 
         System.out.println("[SHM] Using block " + String.valueOf(_block) + " to fetch file " + _fname);
 
@@ -56,20 +58,26 @@ public class ShmInputStream extends InputStream {
         _mem.writeInt(-1, _shm.SYNC(_sender) + _shm.BLK);
         _mem.spinUnlock(_shm.SYNC(_sender) + _shm.SLOCK);
         _mem.spinUnlock(_shm.BASE(_block) + _shm.LOCK);
-        _mem.upSema();
+        //_mem.upSema();
         _mem.closeDevice();
     }
 
     private int fillBuffer() throws Exception {
-        int full;
+        int full = 0;
         int empty;
+        int havelock = -1;
 
         do {
             Thread.sleep(50);
-            full = _mem.readInt(_shm.BASE(_block) + _shm.FULL);
-        } while(full == 0);
+            havelock = _mem.spinTrylock(_shm.BASE(_block) + _shm.FLOCK);
+            if(havelock == 0) {
+                full = _mem.readInt(_shm.BASE(_block) + _shm.FULL);
+                if(full == 0) {
+                    _mem.spinUnlock(_shm.BASE(_block) + _shm.FLOCK);
+                }
+            }
+        } while(full == 0 || havelock != 0);
 
-        _mem.spinLock(_shm.BASE(_block) + _shm.FLOCK);
         full = full - 1;
         _mem.writeInt(full, _shm.BASE(_block) + _shm.FULL);
         _mem.spinUnlock(_shm.BASE(_block) + _shm.FLOCK);
