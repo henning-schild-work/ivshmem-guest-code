@@ -44,7 +44,7 @@ public class Shm {
         /* Convert mem size to MB */
         msize *= 1024*1024;
         /* Reserve space for sync data */
-        msize -= 256;
+        msize -= nmachines * 1024;
         /* Calculate sizes */
         BLOCK_SZ = (int)(msize / nblocks);
         CHUNK_SZ = BLOCK_SZ / (nchunks + 1);
