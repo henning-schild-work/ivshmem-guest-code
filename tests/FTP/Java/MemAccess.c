@@ -114,14 +114,17 @@ JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_waitEventIrq (JNIEnv *env
 
 JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_upSema (JNIEnv *env, jobject obj) {
     ivshmem_send(fd, SEMA_IRQ, 0);
+    return(0);
 }
 
 JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_downSema (JNIEnv *env, jobject obj) {
     ivshmem_send(fd, DOWN_SEMA, 0);
+    return(0);
 }
 
 JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_setSema (JNIEnv *env, jobject obj, jint val) {
     ivshmem_send(fd, SET_SEMA, val);
+    return(0);
 }
 
 JNIEXPORT jint JNICALL Java_org_ualberta_shm_MemAccess_getPosition (JNIEnv *env, jobject obj) {
