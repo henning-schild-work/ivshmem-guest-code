@@ -1,6 +1,7 @@
 package org.ualberta.shm;
 
 import java.io.FileInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.Runnable;
 
@@ -55,6 +56,7 @@ public class ShmServer extends Shm implements Runnable {
             System.out.println("[SHM] Client sent filename: " + sendfile);
 
             ShmOutputStream shmout = new ShmOutputStream(this, block);
+            DataOutputStream dos = new DataOutputStream(shmout);
 
             FileInputStream file = new FileInputStream(sendfile);
 
@@ -63,7 +65,7 @@ public class ShmServer extends Shm implements Runnable {
             while (len >= 0) {
                 rem -= len;
                 if (len > 0) {
-                    shmout.write(bytes, 0, len);
+                    dos.write(bytes, 0, len);
                 } else {
                     System.out.println("Skipping zero-length transfer");
                 }
@@ -74,6 +76,7 @@ public class ShmServer extends Shm implements Runnable {
             }
 
             _mem.writeInt(-1, SYNC(me) + BLK);
+            dos.close();
             shmout.close();
             System.out.println("[SHM] Done sending map outputs.");
         }

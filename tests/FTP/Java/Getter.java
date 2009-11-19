@@ -1,6 +1,7 @@
 import java.net.URL;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.DataInputStream;
 import java.io.File;
 
 public class Getter {
@@ -12,15 +13,16 @@ public class Getter {
         URL u = new URL(args[0]);
         FileOutputStream out = new FileOutputStream((new File(u.getFile())).getName());
         InputStream is = u.openStream();
+        DataInputStream dis = new DataInputStream(is);
 
         do {
-            rd = is.read(buf);
+            rd = dis.read(buf);
             if(rd > 0) {
                 out.write(buf, 0, rd);
             }
         } while(rd >= 0);
 
         out.close();
-        is.close();
+        dis.close();
     }
 }
