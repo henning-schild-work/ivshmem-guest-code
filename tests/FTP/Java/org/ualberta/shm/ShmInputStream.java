@@ -1,8 +1,5 @@
 package org.ualberta.shm;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.InputStream;
 import java.io.IOException;
 
@@ -18,7 +15,6 @@ public class ShmInputStream extends InputStream {
     private int _block;
     private int _sender;
 
-    private static final Log LOG = LogFactory.getLog(ShmInputStream.class);
 
     public ShmInputStream(Shm m, String fname, int sender) {
         super();
@@ -37,7 +33,7 @@ public class ShmInputStream extends InputStream {
             }
         }
 
-        LOG.info("[SHM] Using block " + String.valueOf(_block) + " to fetch file " + _fname);
+        System.out.println("[SHM] Using block " + String.valueOf(_block) + " to fetch file " + _fname);
 
         /* Initiate connection */
         _mem.spinLock(_shm.SYNC(sender) + _shm.SLOCK);

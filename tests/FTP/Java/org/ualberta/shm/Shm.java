@@ -1,8 +1,6 @@
 package org.ualberta.shm;
 
 import java.io.IOException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /* This class contains constants and "macros" for the FTP apps. */
 
@@ -52,12 +50,10 @@ public class Shm {
         CHUNK_SZ = BLOCK_SZ / (nchunks + 1);
         DATA_SZ = CHUNK_SZ - 4;
 
-        Log LOG = LogFactory.getLog(Shm.class);
-
-        LOG.info("[SHM] Initialized.");
-        LOG.info("\tMemory: " + String.valueOf(MSIZE) + "MB");
-        LOG.info("\tBlocks: " + String.valueOf(NBLOCKS) + " x " + String.valueOf(BLOCK_SZ) + "B");
-        LOG.info("\tChunks: " + String.valueOf(NCHUNKS) + " x " + String.valueOf(CHUNK_SZ) + "B per block");
+        System.out.println("[SHM] Initialized.");
+        System.out.println("\tMemory: " + String.valueOf(MSIZE) + "MB");
+        System.out.println("\tBlocks: " + String.valueOf(NBLOCKS) + " x " + String.valueOf(BLOCK_SZ) + "B");
+        System.out.println("\tChunks: " + String.valueOf(NCHUNKS) + " x " + String.valueOf(CHUNK_SZ) + "B per block");
     }
 
     public void prep() throws IOException {
