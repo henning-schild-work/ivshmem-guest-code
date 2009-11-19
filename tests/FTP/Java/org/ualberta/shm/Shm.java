@@ -69,6 +69,7 @@ public class Shm {
         }
 
         /* Initialize the free blocks semaphore */
+        System.out.println("[SHM] Setting semaphore to " + String.valueOf(NBLOCKS));
         _mem.setSema(NBLOCKS);
     }
 

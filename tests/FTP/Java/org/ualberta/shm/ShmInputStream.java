@@ -28,6 +28,7 @@ public class ShmInputStream extends InputStream {
         /* Find a free block */
         _mem.downSema();
         for(_block = 0; _block < _shm.NBLOCKS; _block++) {
+            System.out.println("[SHM] Trying block " + String.valueOf(_block));
             if(_mem.spinTrylock(_shm.BASE(_block) + _shm.LOCK) == 0) {
                 break;
             }
