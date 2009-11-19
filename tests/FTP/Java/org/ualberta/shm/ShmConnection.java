@@ -47,7 +47,7 @@ public class ShmConnection extends URLConnection {
 
         int sender = _shmHosts.get(u.getHost()).intValue();
 
-        _inputStream = new ShmInputStream(_shm, u.getQuery(), sender);
+        _inputStream = new ShmInputStream(_shm, u.getFile(), sender);
     }
 
     public InputStream getInputStream() throws IOException {
