@@ -65,7 +65,7 @@ static ssize_t kvm_ivshmem_read(struct file *, char *, size_t, loff_t *);
 static ssize_t kvm_ivshmem_write(struct file *, const char *, size_t, loff_t *);
 static loff_t kvm_ivshmem_lseek(struct file * filp, loff_t offset, int origin);
 
-enum ivshmem_ioctl { set_sema, down_sema, sema_irq, wait_event, wait_event_irq, read_ivposn, read_livelist };
+enum ivshmem_ioctl { set_sema, down_sema, empty, wait_event, wait_event_irq, read_ivposn, read_livelist, sema_irq };
 
 static const struct file_operations kvm_ivshmem_ops = {
     .owner   = THIS_MODULE,
@@ -115,7 +115,7 @@ static int kvm_ivshmem_ioctl(struct inode * ino, struct file * filp,
             rv = down_interruptible(&sema);
             printk("KVM_IVSHMEM: waking\n");
             break;
-        case sema_irq:
+        case empty:
             msg = ((arg & 0xff) << 8) + (cmd & 0xff);
             printk("KVM_IVSHMEM: args is %ld\n", arg);
             printk("KVM_IVSHMEM: ringing sema doorbell\n");
@@ -142,14 +142,15 @@ static int kvm_ivshmem_ioctl(struct inode * ino, struct file * filp,
             printk("KVM_IVSHMEM: live list bit vector is %d\n", msg);
             rv = copy_to_user(arg, &msg, sizeof(msg));
             break;
-        case 7:
-            msg = ((arg & 0xff) << 8) + (2 & 0xff);
+        case sema_irq:
+            // 2 is the actual code, but we use 7 from the user
+            msg = ((arg & 0xff) << 8) + (cmd & 0xff);
             printk("KVM_IVSHMEM: args is %ld\n", arg);
             printk("KVM_IVSHMEM: ringing sema doorbell\n");
             writew(msg, kvm_ivshmem_dev.regs + Doorbell);
             break;
         default:
-            printk("KVM_IVSHMEM: bad ioctl\n");
+            printk("KVM_IVSHMEM: bad ioctl (\n");
     }
 #endif
 
