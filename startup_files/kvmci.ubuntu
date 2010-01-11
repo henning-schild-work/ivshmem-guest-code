@@ -60,14 +60,14 @@ vmware_unload_module() {
 
 vmware_start_kvm_shmem() {
   # only load kvm_shmem if it's not already loaded
-  if [ "`isLoaded "$module_name"`" = 'no' ]; then
-    vmware_load_module $module_name
-  fi
-  if [ ! -f /dev/kvm_shmem ]; then
+  #if [ "`isLoaded "$module_name"`" = 'no' ]; then
+  #  vmware_load_module $module_name
+  #fi
+  if [ ! -f $device ]; then
     local major=`cat /proc/devices | grep $module_name | awk '{print $1}'`
     mknod --mode=666 $device c $major 0
   else
-    chmod 666 /dev/kvm_shmem
+    chmod 666 $device
   fi
 }
 
