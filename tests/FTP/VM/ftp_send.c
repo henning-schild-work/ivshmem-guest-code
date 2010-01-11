@@ -19,7 +19,8 @@ int main(int argc, char ** argv){
     int receiver;
     void * memptr;
     char * copyto;
-    int idx, sent, total;
+    int idx;
+    unsigned int total, sent;
     struct stat st;
 
     int *full, *empty;
@@ -66,8 +67,8 @@ int main(int argc, char ** argv){
     *empty = 15;
 
     /* Send the file size */
-    printf("[SEND] sending size %d to receiver %d\n", total, receiver);
-    memcpy((void*)copyto, (void*)&total, sizeof(int));
+    printf("[SEND] sending size %u to receiver %d\n", total, receiver);
+    memcpy((void*)copyto, (void*)&total, sizeof(unsigned int));
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, receiver);
     /* Wait to know the reciever got the size */
     printf("[SEND] waiting for receiver to ack size\n");
@@ -86,7 +87,7 @@ int main(int argc, char ** argv){
         printf("[SEND] sending bytes in block %d\n", idx);
         read(ffd, copyto + OFFSET(idx), CHUNK_SZ);
         sent += CHUNK_SZ;
-        printf("[SEND] notifying, sent size now %d\n", sent);
+        printf("[SEND] notifying, sent size now %u\n", sent);
 
         while(pthread_spin_lock(flock) != 0);
         *full = *full + 1;

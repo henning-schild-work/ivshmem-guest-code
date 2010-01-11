@@ -19,7 +19,8 @@ int main(int argc, char ** argv){
     int sender;
     void * memptr;
     char * copyfrom;
-    int idx, recvd, total;
+    int idx;
+    unsigned int total, recvd;
 
     int *full, *empty;
     pthread_spinlock_t *flock, *elock;
@@ -50,9 +51,9 @@ int main(int argc, char ** argv){
     /* Get the filesize */
     printf("[RECV] waiting for size from %d\n", sender);
     ivshmem_send(ivfd, WAIT_EVENT, sender);
-    memcpy((void*)&total, (void*)copyfrom, sizeof(int));
+    memcpy((void*)&total, (void*)copyfrom, sizeof(unsigned int));
     /* We got the size! */
-    printf("[RECV] got size %d, notifying\n", total);
+    printf("[RECV] got size %u, notifying\n", total);
     ivshmem_send(ivfd, WAIT_EVENT_IRQ, sender);
 
     /* My "semaphores" */
@@ -73,7 +74,7 @@ int main(int argc, char ** argv){
         printf("[RECV] recieving bytes in block %d\n", idx);
         write(ffd, copyfrom + OFFSET(idx), CHUNK_SZ);
         recvd += CHUNK_SZ;
-        printf("[RECV] block received, notifying sender. recvd size now %d\n", recvd);
+        printf("[RECV] block received, notifying sender. recvd size now %u\n", recvd);
 
         while(pthread_spin_lock(elock) != 0);
         *empty = *empty + 1;
