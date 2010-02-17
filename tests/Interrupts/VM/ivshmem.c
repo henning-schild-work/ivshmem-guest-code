@@ -19,8 +19,14 @@ int ivshmem_recv(int fd, int ivshmem_cmd)
 
     int rv, buf;
 
+    buf = 0;
     printf("[RECVIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
 	rv = ioctl(fd, ivshmem_cmd, &buf);
+
+    if (rv < 0) {
+        fprintf(stderr, "error on ioctl call\n");
+        return rv;
+    }
 
     return buf;
 

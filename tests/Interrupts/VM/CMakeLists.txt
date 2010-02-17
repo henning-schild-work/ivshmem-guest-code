@@ -4,6 +4,7 @@ project(campino)
 add_executable(test1 sendioctl)
 add_executable(sum_sema sum_sema)
 add_executable(dump_sema dump_sema)
+add_executable(getident getident)
 add_library(ivshmem ivshmem)
 
 set(CMAKE_C_FLAGS_DEBUG "-DDEBUG")

@@ -1,98 +1,131 @@
-#!/bin/sh
+#! /bin/sh
 
-# This is an init script for Ubuntu
+### BEGIN INIT INFO
+# Provides:		nahanni
+# Required-Start:	$remote_fs $syslog
+# Required-Stop:	$remote_fs $syslog
+# Default-Start:	2 3 4 5
+# Default-Stop:		1
+# Short-Description:	Nahanni Shared Memory
+### END INIT INFO
+
+set -e
+
+export device="/dev/ivshmem"
+export module_name="kvm_ivshmem"
+# /etc/init.d/ssh: start and stop the OpenBSD "secure shell(tm)" daemon
+
+test -x /usr/sbin/sshd || exit 0
+( /usr/sbin/sshd -\? 2>&1 | grep -q OpenSSH ) 2>/dev/null || exit 0
+
+export SSHD_OOM_ADJUST=-17
+if test -f /etc/default/ssh; then
+    . /etc/default/ssh
+fi
+
+# Are we in a virtual environment that doesn't support modifying
+# /proc/self/oom_adj?
+if grep -q 'envID:.*[1-9]' /proc/self/status; then
+    unset SSHD_OOM_ADJUST
+fi
 
 . /lib/lsb/init-functions
 
-module_name="kvm_ivshmem"
-device="/dev/ivshmem"
+if [ -n "$2" ]; then
+    SSHD_OPTS="$SSHD_OPTS $2"
+fi
 
-vmware_success() {
-  if [ "`type -t 'echo_success' 2>/dev/null`" = 'function' ]; then
-    echo_success
-  else
-    echo -n "$rc_done"
-  fi
+# Are we running from init?
+run_by_init() {
+    ([ "$previous" ] && [ "$runlevel" ]) || [ "$runlevel" = S ]
 }
 
-vmware_exec() {
-  local msg="$1"  # IN
-  local func="$2" # IN
-  shift 2
-
-  log_begin_msg "$msg"
-
-#  (trap '' HUP; "$func" "$@") >/dev/null 2>&1
-  (trap '' HUP; "$func" "$@") 
-
-  log_end_msg $?
-  return 0
+check_for_no_start() {
+    # forget it if we're trying to start, and /etc/ssh/sshd_not_to_be_run exists
+    if [ -e /etc/ssh/sshd_not_to_be_run ]; then 
+	if [ "$1" = log_end_msg ]; then
+	    log_end_msg 0
+	fi
+	if ! run_by_init; then
+	    log_action_msg "OpenBSD Secure Shell server not in use (/etc/ssh/sshd_not_to_be_run)"
+	fi
+	exit 0
+    fi
 }
 
-# Is a given module loaded?
-isLoaded() {
-  local module="$1"
-
-  /sbin/lsmod | awk 'BEGIN {n = "no";} {if ($1 == "'"$module"'") n = "yes";} END {print n;}'
+check_dev_null() {
+    if [ ! -c /dev/null ]; then
+	if [ "$1" = log_end_msg ]; then
+	    log_end_msg 1 || true
+	fi
+	if ! run_by_init; then
+	    log_action_msg "/dev/null is not a character device!"
+	fi
+	exit 1
+    fi
 }
 
-vmware_unload_module() {
-   if [ "`isLoaded "$1"`" = 'yes' ]; then
-      /sbin/rmmod "$1" >/dev/null 2>&1 || exit 1
-   fi
-   return 0
+check_privsep_dir() {
+    # Create the PrivSep empty dir if necessary
+    if [ ! -d /var/run/sshd ]; then
+	mkdir /var/run/sshd
+	chmod 0755 /var/run/sshd
+    fi
 }
 
-vmware_load_module() {
-   if [ "`isLoaded "$1"`" = 'yes' ]; then
-      /sbin/rmmod "$1"
-   fi
-   /sbin/insmod -s -f "/lib/modules/`uname -r`/kernel/drivers/char/$1.ko" >/dev/null 2>&1 || /sbin/insmod -s -f "$1" >/dev/null 2>&1 || exit 1
-   return 0
+check_config() {
+    if [ ! -e /etc/ssh/sshd_not_to_be_run ]; then
+	/usr/sbin/sshd -t || exit 1
+    fi
 }
 
-vmware_unload_module() {
-   if [ "`isLoaded "$1"`" = 'yes' ]; then
-      /sbin/rmmod "$1" >/dev/null 2>&1 || exit 1
-   fi
-   return 0
-}
-
-vmware_start_kvm_shmem() {
-  # only load kvm_shmem if it's not already loaded
-  #if [ "`isLoaded "$module_name"`" = 'no' ]; then
-  #  vmware_load_module $module_name
-  #fi
+create_dev_kvm_ivshmem() {
   if [ ! -f $device ]; then
+    echo "then"
     local major=`cat /proc/devices | grep $module_name | awk '{print $1}'`
     mknod --mode=666 $device c $major 0
   else
+    echo "else"
     chmod 666 $device
   fi
+
 }
 
-# unmount it
-vmware_stop_kvm_shmem() {
-  # only unload kvm_shmem if it's already loaded
-  if [ "`isLoaded "$module_name"`" = 'yes' ]; then
-    vmware_unload_module $module_name
-  fi
-  rm -f $device
-}
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
 case "$1" in
   start)
-	vmware_exec 'KVM inter-vm shared memory device:' vmware_start_kvm_shmem
-	exitcode=$(($exitcode + $?))
+	check_privsep_dir
+	check_for_no_start
+	check_dev_null
+	log_daemon_msg "Starting KVM shared memory device (Nahanni)"
+	if create_dev_kvm_ivshmem; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
 	;;
   stop)
-	vmware_exec 'KVM inter-vm shared memory device:' vmware_stop_kvm_shmem
-        exitcode=$(($exitcode + $?))
-  	;;
-  *) 
-	log_success_msg "Usage: /etc/init.d/kvm_ivshmem {start|stop}"
-    	exit 1
+	log_daemon_msg "Stopping KVM shared memory device (Nahanni)"
+	if rm -f $device; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
+	;;
+
+  reload|force-reload)
+	;;
+
+  restart)
+	;;
+
+  status)
+	;;
+
+  *)
+	log_action_msg "Usage: /etc/init.d/ssh {start|stop|reload|force-reload|restart|status}"
+	exit 1
 esac
 
 exit 0
-
