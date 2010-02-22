@@ -20,8 +20,11 @@ int ivshmem_recv(int fd, int ivshmem_cmd)
     int rv, buf;
 
     buf = 0;
+
+#ifdef DEBUG
     printf("[RECVIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
-	rv = ioctl(fd, ivshmem_cmd, &buf);
+#endif
+    rv = ioctl(fd, ivshmem_cmd, &buf);
 
     if (rv < 0) {
         fprintf(stderr, "error on ioctl call\n");
@@ -38,35 +41,10 @@ int ivshmem_send(int fd, int ivshmem_cmd, int destination_vm)
     int rv;
 
 #ifdef DEBUG
-	switch (ivshmem_cmd) {
-		case SET_SEMA:
-			printf("[SENDIOCTL] set_sema\n");
-			break;
-		case DOWN_SEMA:
-			printf("[SENDIOCTL] down_sema\n");
-			break;
-        case SEMA_IRQ:
-			printf("[SENDIOCTL] sema_irq\n");
-            break;
-        case WAIT_EVENT:
-			printf("[SENDIOCTL] wait_event\n");
-            break;
-        case WAIT_EVENT_IRQ:
-			printf("[SENDIOCTL] wait_event_irq\n");
-            break;
-        case GET_IVPOSN:
-			printf("[SENDIOCTL] wait_event_irq\n");
-            break;
-        case GET_LIVELIST:
-			printf("[SENDIOCTL] wait_event_irq\n");
-            break;
-		default:
-			printf("[SENDIOCTL] unknown ioctl\n");
-	}
+    printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
 #endif
 
-    printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
-	rv = ioctl(fd, ivshmem_cmd, destination_vm);
+    rv = ioctl(fd, ivshmem_cmd, destination_vm);
 
 #ifdef DEBUG
     printf("[SENDIOCTL] rv is %d\n", rv);
