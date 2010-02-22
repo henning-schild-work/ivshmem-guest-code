@@ -19,19 +19,21 @@ int main(int argc, char ** argv){
     long * long_array;
     int i,fd,j, k;
     struct test * myptr;
-    int other = 3;
+    int other;
 
-    if (argc != 3){
-        printf("USAGE: sum <filename> <num chunks>\n");
+    if (argc != 4){
+        printf("USAGE: sum <filename> <num chunks> <other vm>\n");
         exit(-1);
     }
 
+    fd=open(argv[1], O_RDWR);
     printf("[SUM] opening file %s\n", argv[1]);
     num_chunks=atol(argv[2]);
+    other = atoi(argv[3]);
+
     length=num_chunks*CHUNK_SZ;
     printf("[SUM] length is %d\n", length);
 
-    fd=open(argv[1], O_RDWR);
 
     if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == -1){
         printf("mmap failed (0x%x)\n", memptr);

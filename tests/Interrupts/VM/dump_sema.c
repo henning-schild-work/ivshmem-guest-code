@@ -20,19 +20,23 @@ int main(int argc, char ** argv){
     void * memptr;
     long * long_array;
     long num_chunks;
+    int other;
     int i, j, k;
 
-    if (argc != 3){
-        printf("USAGE: dump <filename> <num chunks>\n");
+    if (argc != 4){
+        printf("USAGE: dump_sema <filename> <num chunks> <other vm>\n");
         exit(-1);
     }
 
+    fd=open(argv[1], O_RDWR);
     printf("[DUMP] opening file %s\n", argv[1]);
+
     num_chunks=atol(argv[2]);
+    other = atoi(argv[3]);
+
     length=num_chunks*CHUNK_SZ;
     printf("[DUMP] size is %d\n", length);
 
-    fd=open(argv[1], O_RDWR);
 
     if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == -1)
     {
@@ -62,7 +66,7 @@ int main(int argc, char ** argv){
 	            long_array[offset + i]=rand();
             }
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
-            ivshmem_send(fd, SEMA_IRQ, 2); // we are interacting with VM 2
+            ivshmem_send(fd, SEMA_IRQ, other); // we are interacting with VM 2
 
             SHA1_Final(md,&context);
 
