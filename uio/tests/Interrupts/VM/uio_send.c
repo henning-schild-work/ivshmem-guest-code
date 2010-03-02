@@ -45,7 +45,7 @@ int main(int argc, char ** argv){
     msg = ((dest & 0xff) << 8) + (cmd & 0xff);
 
     printf("[UIO] writing %u\n", msg);
-    short_array[16] = msg;
+    short_array[2] = msg;
 
 //    printf("md is *%20s*\n", md);
 
