@@ -17,7 +17,7 @@ int main(int argc, char ** argv){
 	int * count;
 	short rv_short;
 	int i,x=0;
-	void * map_region;
+	short * regptr;
 	char * file;
 	int my_ioctl;
 	long ioctl_arg;
@@ -42,13 +42,13 @@ int main(int argc, char ** argv){
 		exit(-1);
 	}
 
-    if ((my_ioctl != GET_POSN) && (my_ioctl != GET_LIVELIST)) {
-        ivshmem_send(fd, my_ioctl, ioctl_arg);
-    } else {
-        int val;
-        val = ivshmem_recv(fd, my_ioctl);
-        printf("%d\n", val);
+    if ((regptr = (short *)mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == -1){
+        printf("mmap failed (0x%x)\n", memptr);
+        close (fd);
+        exit (-1);
     }
+
+    printf("ID is %d\n", regptr[24]);
 
 	close(fd);
 

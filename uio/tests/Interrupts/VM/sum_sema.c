@@ -51,7 +51,9 @@ int main(int argc, char ** argv){
     printf("[SUM] reading %d chunks\n", num_chunks);
 
     for (k = 0; k < 2; k++){
-        for (j = 0; j < num_chunks; j++){
+        for (j = 0; j < num_chunks; j++) {
+
+            int rv;
 
             SHA_CTX context;
             unsigned char md[20];
@@ -73,6 +75,7 @@ int main(int argc, char ** argv){
                 unsigned char c = md[i];
                 printf("%2.2x",c);
             }
+
             printf("\n");
         }
     }

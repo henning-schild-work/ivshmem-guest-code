@@ -22,13 +22,14 @@ int main(int argc, char ** argv){
     long num_chunks;
     int other;
     int i, j, k;
+    int count;
 
     if (argc != 4){
         printf("USAGE: dump_sema <filename> <num chunks> <other vm>\n");
         exit(-1);
     }
 
-    fd=open(argv[1], O_RDWR);
+    fd=open(argv[1], O_RDWR|O_NONBLOCK);
     printf("[DUMP] opening file %s\n", argv[1]);
 
     num_chunks=atol(argv[2]);
@@ -51,13 +52,12 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
-    ivshmem_send(regptr, SET_SEMA, 8);
-
     srand(time(NULL));
     long_array=(long *)memptr;
 
     for (k = 0; k < 2; k++){
         for (j = 0; j < num_chunks; j++){
+            int rv;
 
             SHA_CTX context;
             char md[20];
@@ -67,10 +67,14 @@ int main(int argc, char ** argv){
 
             SHA1_Init(&context);
 
-            ivshmem_recv(fd, DOWN_SEMA, 0);
+            rv = ivshmem_recv(fd, DOWN_SEMA, 0);
+
+            if (rv > 0) printf("rv is above 0\n");
+
             for (i = 0; i < CHUNK_SZ/sizeof(long); i++){
 	            long_array[offset + i]=rand();
             }
+
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             ivshmem_send(regptr, SEMA_IRQ, other); // we are interacting with VM 2
 
