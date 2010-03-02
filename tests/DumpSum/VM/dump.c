@@ -30,7 +30,7 @@ int main(int argc, char ** argv){
 
     fd=open(argv[1], O_RDWR);
 
-    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == (caddr_t)-1){
+    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == (caddr_t)-1){
         printf("mmap failed (0x%x)\n", memptr);
         close (fd);
         exit (-1);
