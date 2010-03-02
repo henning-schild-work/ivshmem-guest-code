@@ -48,7 +48,7 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
-    printf("ID is %d\n", regptr[24]);
+    printf("ID is %d\n", regptr[3]);
 
 	close(fd);
 

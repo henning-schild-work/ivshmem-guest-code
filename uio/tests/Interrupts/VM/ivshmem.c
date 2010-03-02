@@ -30,6 +30,8 @@ int ivshmem_recv(int fd)
         fprintf(stderr, "other error\n");
     }
 
+    /* TODO: check status register */
+
     return rv;
 }
 
@@ -72,7 +74,7 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
     short_array = (short *) regs;
     msg = ((destination_vm & 0xff) << 8) + (ivshmem_cmd & 0xff);
 
-    short_array[16] = msg;
+    short_array[2] = msg;
 //    rv = ioctl(fd, ivshmem_cmd, destination_vm);
 
 #ifdef DEBUG
