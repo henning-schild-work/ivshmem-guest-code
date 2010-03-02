@@ -86,7 +86,7 @@ int main(int argc, char ** argv){
 //    printf("md is *%20s*\n", md);
 
     munmap(memptr, length);
-    munmap(regptr, length);
+    munmap(regptr, 256);
     close(fd);
 
     printf("[SUM] Exiting...\n");

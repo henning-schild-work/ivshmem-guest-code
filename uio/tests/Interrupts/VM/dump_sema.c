@@ -92,7 +92,7 @@ int main(int argc, char ** argv){
 
     printf("[DUMP] munmap is unmapping %x\n", memptr);
     munmap(memptr, length);
-    munmap(regptr, length);
+    munmap(regptr, 256);
 
     close(fd);
 
