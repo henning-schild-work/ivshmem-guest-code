@@ -20,7 +20,6 @@ int ivshmem_recv(int fd)
     int rv, buf;
 
     buf = 0;
-    printf("[RECVIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
     rv = read(fd, &buf, sizeof(buf));
 
     printf("[RECVIOCTL] rv is %d\n", rv);

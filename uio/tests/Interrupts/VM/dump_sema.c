@@ -67,7 +67,7 @@ int main(int argc, char ** argv){
 
             SHA1_Init(&context);
 
-            rv = ivshmem_recv(fd, DOWN_SEMA, 0);
+            rv = ivshmem_recv(fd);
 
             if (rv > 0) printf("rv is above 0\n");
 
