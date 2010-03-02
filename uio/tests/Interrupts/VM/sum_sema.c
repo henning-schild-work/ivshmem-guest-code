@@ -63,7 +63,10 @@ int main(int argc, char ** argv){
 
             SHA1_Init(&context);
 
-            ivshmem_recv(fd, DOWN_SEMA, NULL);
+            rv = ivshmem_recv(fd);
+
+            if (rv > 0) printf("read +1\n");
+
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             ivshmem_send(regptr, SEMA_IRQ, (void *)other);
 

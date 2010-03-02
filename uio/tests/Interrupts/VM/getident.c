@@ -43,7 +43,7 @@ int main(int argc, char ** argv){
 	}
 
     if ((regptr = (short *)mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == -1){
-        printf("mmap failed (0x%x)\n", memptr);
+        printf("mmap failed (0x%x)\n", regptr);
         close (fd);
         exit (-1);
     }
