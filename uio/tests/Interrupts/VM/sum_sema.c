@@ -26,7 +26,7 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    fd=open(argv[1], O_RDWR);
+    fd=open(argv[1], O_RDWR|O_NONBLOCK);
     printf("[SUM] opening file %s\n", argv[1]);
     num_chunks=atol(argv[2]);
     other = atoi(argv[3]);

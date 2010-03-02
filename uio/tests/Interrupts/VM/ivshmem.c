@@ -25,10 +25,12 @@ int ivshmem_recv(int fd, int ivshmem_cmd)
 
     printf("[RECVIOCTL] rv is %d\n", rv);
 
-    if (rv < 0) {
-        fprintf(stderr, "error on ioctl call\n");
-        return rv;
+    if (rv == -EAGAIN) {
+        fprintf(stderr, "EAGAIN\n");
+    } else if (rv < 0) {
+        fprintf(stderr, "other error\n");
     }
+
 
     return rv;
 
