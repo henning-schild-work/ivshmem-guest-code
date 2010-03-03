@@ -29,7 +29,7 @@ int main(int argc, char ** argv){
     cmd = (unsigned short) atoi(argv[3]);
     dest = (unsigned short) atoi(argv[4]);
 
-    printf("[UIO] length is %d\n", length);
+    printf("[UIO] count is %d\n", count);
     printf("[UIO] size of short %d\n", sizeof(unsigned short));
 
     if ((memptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == -1){
@@ -50,7 +50,7 @@ int main(int argc, char ** argv){
         sleep(1);
     }
 
-    munmap(memptr, length);
+    munmap(memptr, 256);
     close(fd);
 
     printf("[UIO] Exiting...\n");
