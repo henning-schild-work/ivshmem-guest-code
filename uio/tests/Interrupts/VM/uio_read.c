@@ -12,20 +12,24 @@
 
 int main(int argc, char ** argv){
 
-    int i, rv, fd;
+    int i, count, rv, fd , buf;
 
-    if (argc != 2) {
-        printf("USAGE: uio_read <filename>\n");
+    if (argc != 3) {
+        printf("USAGE: uio_read <filename> <count>\n");
         exit(-1);
     }
 
-    fd=open(argv[1], O_RDWR);
+    fd = open(argv[1], O_RDWR);
+    i = atoi(argv[2]);
     printf("[UIO] opening file %s\n", argv[1]);
 
     printf("[UIO] reading\n");
-    rv = read(fd, &i, sizeof(i));
 
-    printf("[UIO] rv is %d\n", rv);
+    for (i = 0; i < count; i++) {
+        rv = read(fd, &buf, sizeof(buf));
+        printf("[UIO] buf is %d\n", buf);
+    }
+
 
     close(fd);
 

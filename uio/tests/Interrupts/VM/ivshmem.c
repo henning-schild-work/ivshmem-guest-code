@@ -32,7 +32,7 @@ int ivshmem_recv(int fd)
 
     /* TODO: check status register */
 
-    return rv;
+    return buf;
 }
 
 int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)

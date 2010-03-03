@@ -26,7 +26,7 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    fd=open(argv[1], O_RDWR|O_NONBLOCK);
+    fd=open(argv[1], O_RDWR);
     printf("[SUM] opening file %s\n", argv[1]);
     num_chunks=atol(argv[2]);
     other = atoi(argv[3]);
@@ -65,7 +65,7 @@ int main(int argc, char ** argv){
 
             rv = ivshmem_recv(fd);
 
-            if (rv > 0) printf("read +1\n");
+            if (rv > 0) printf("read %d\n", rv);
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             ivshmem_send(regptr, SEMA_IRQ, (void *)other);

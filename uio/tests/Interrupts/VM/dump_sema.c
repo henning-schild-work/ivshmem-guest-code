@@ -55,6 +55,7 @@ int main(int argc, char ** argv){
     srand(time(NULL));
     long_array=(long *)memptr;
 
+    count = num_chunks;
     for (k = 0; k < 2; k++){
         for (j = 0; j < num_chunks; j++){
             int rv;
@@ -69,14 +70,17 @@ int main(int argc, char ** argv){
 
             rv = ivshmem_recv(fd);
 
-            if (rv > 0) printf("rv is above 0\n");
+            if (rv > 0) {
+                count++;
+                printf("rv = %d\n", rv);
+            }
 
             for (i = 0; i < CHUNK_SZ/sizeof(long); i++){
 	            long_array[offset + i]=rand();
             }
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
-            ivshmem_send(regptr, SEMA_IRQ, other); // we are interacting with VM 2
+            ivshmem_send(regptr, SEMA_IRQ, other); 
 
             SHA1_Final(md,&context);
 

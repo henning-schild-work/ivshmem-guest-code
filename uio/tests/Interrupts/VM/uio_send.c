@@ -12,29 +12,27 @@
 
 int main(int argc, char ** argv){
 
-    long length;
     void * memptr;
     unsigned short * short_array;
-    int i,fd,j, k;
-    struct test * myptr;
-    int other;
+    int i, fd;
+    int count;
     short msg, cmd, dest;
 
     if (argc != 5) {
-        printf("USAGE: uio_ioctl <filename> <size in bytes> <cmd> <dest>\n");
+        printf("USAGE: uio_ioctl <filename> <count> <cmd> <dest>\n");
         exit(-1);
     }
 
     fd=open(argv[1], O_RDWR);
     printf("[UIO] opening file %s\n", argv[1]);
-    length=atol(argv[2]);
+    count = atol(argv[2]);
     cmd = (unsigned short) atoi(argv[3]);
     dest = (unsigned short) atoi(argv[4]);
 
     printf("[UIO] length is %d\n", length);
     printf("[UIO] size of short %d\n", sizeof(unsigned short));
 
-    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == -1){
+    if ((memptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == -1){
         printf("mmap failed (0x%x)\n", memptr);
         close (fd);
         exit (-1);
@@ -45,9 +43,12 @@ int main(int argc, char ** argv){
     msg = ((dest & 0xff) << 8) + (cmd & 0xff);
 
     printf("[UIO] writing %u\n", msg);
-    short_array[2] = msg;
 
-//    printf("md is *%20s*\n", md);
+    for (i = 0; i < count; i++) {
+        printf("[UIO] ping #%d\n", i);
+        short_array[2] = msg;
+        sleep(1);
+    }
 
     munmap(memptr, length);
     close(fd);
