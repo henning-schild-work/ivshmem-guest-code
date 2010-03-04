@@ -19,7 +19,7 @@ int main(int argc, char ** argv){
     long * long_array;
     int i,fd,j, k;
     struct test * myptr;
-    int other;
+    int other, count;
 
     if (argc != 4){
         printf("USAGE: sum <filename> <num chunks> <other vm>\n");
@@ -50,7 +50,10 @@ int main(int argc, char ** argv){
 
     printf("[SUM] reading %d chunks\n", num_chunks);
 
+    count = 0;
     for (k = 0; k < 2; k++){
+        int oldrv;
+
         for (j = 0; j < num_chunks; j++) {
 
             int rv;
@@ -65,9 +68,13 @@ int main(int argc, char ** argv){
 
             rv = ivshmem_recv(fd);
 
-            if (rv > 0) printf("read %d\n", rv);
+            if (rv > 0)  {
+                count += rv - oldrv;
+                printf("rv = %d\n", rv);
+            }
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
+            count--;
             ivshmem_send(regptr, SEMA_IRQ, (void *)other);
 
             SHA1_Final(md,&context);
