@@ -7,10 +7,14 @@
 #include <openssl/sha.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <errno.h>
 #include "ivshmem.h"
 
 #define CHUNK_SZ (1024l*1024l*4l)
+
+int do_select(int fd);
+
 
 int main(int argc, char ** argv){
 
@@ -66,6 +70,7 @@ int main(int argc, char ** argv){
 
             SHA1_Init(&context);
 
+            do_select(fd);
             rv = ivshmem_recv(fd);
 
             if (rv > 0)  {
@@ -97,4 +102,18 @@ int main(int argc, char ** argv){
     close(fd);
 
     printf("[SUM] Exiting...\n");
+}
+
+int do_select (int fd) {
+
+    fd_set readset;
+
+    FD_ZERO(&readset);
+    /* conn socket is in Live_vms at posn 0 */
+    FD_SET(fd, &readset);
+
+    select(fd + 1, &readset, NULL, NULL, NULL);
+
+    return 1;
+
 }

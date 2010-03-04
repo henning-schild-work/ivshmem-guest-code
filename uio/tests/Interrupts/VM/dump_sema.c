@@ -70,12 +70,14 @@ int main(int argc, char ** argv){
 
             SHA1_Init(&context);
 
-            rv = ivshmem_recv(fd);
+            do {
+                rv = ivshmem_recv(fd);
 
-            if (rv > 0) {
-                count += rv - oldrv;
-                printf("rv = %d\n", rv);
-            }
+                if (rv > 0) {
+                    count += rv - oldrv;
+                    printf("rv = %d\n", rv);
+                }
+            } while (count <= 0);
 
             for (i = 0; i < CHUNK_SZ/sizeof(long); i++){
 	            long_array[offset + i]=rand();
