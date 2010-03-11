@@ -9,15 +9,21 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <string.h>
 #include "ivshmem.h"
+
+enum ivshmem_registers {
+    IntrMask = 0,
+    IntrStatus = 4,
+    Doorbell = 8,
+    IVPosition = 12,
+    IVLiveList = 16
+};
 
 int main(int argc, char ** argv){
 
-	int rv,fd;
-	int * count;
-	short rv_short;
-	int i,x=0;
-	short * regptr;
+	int fd;
+	int * regptr;
 	char * file;
 	int my_ioctl;
 	long ioctl_arg;
@@ -28,7 +34,7 @@ int main(int argc, char ** argv){
         exit(-1);
 	}
 
-	file=strdup(argv[1]);
+	file = strdup(argv[1]);
 
 	my_ioctl = atol(argv[2]);
 	if (argc == 4) {
@@ -37,18 +43,18 @@ int main(int argc, char ** argv){
 		ioctl_arg = -1;
 	}
 
-	if ((fd=open(file, O_RDWR)) < 0) {
+	if ((fd = open(file, O_RDWR)) < 0) {
 		fprintf(stderr, "ERROR: cannot open file\n");
 		exit(-1);
 	}
 
-    if ((regptr = (short *)mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == -1){
-        printf("mmap failed (0x%x)\n", regptr);
+    if ((regptr = (int *)mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == (void *) -1){
+        printf("mmap failed\n");
         close (fd);
         exit (-1);
     }
 
-    printf("ID is %d\n", regptr[3]);
+    printf("ID is %d\n", regptr[IVPosition/sizeof(int)]);
 
 	close(fd);
 
