@@ -48,7 +48,7 @@ int main(int argc, char ** argv){
 		printf("[DUMP] mapped to %p\n", map_region);
 	}
 
-//	srand(time());
+	srand(time());
 	long_array=(long *)map_region;
 	for (i=0; i < size/sizeof(long); i++){
 		long_array[i]=rand();	

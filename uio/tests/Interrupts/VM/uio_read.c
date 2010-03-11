@@ -30,7 +30,6 @@ int main(int argc, char ** argv){
         printf("[UIO] buf is %d\n", buf);
     }
 
-
     close(fd);
 
     printf("[UIO] Exiting...\n");

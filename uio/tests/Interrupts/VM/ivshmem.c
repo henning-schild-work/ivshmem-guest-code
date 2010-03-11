@@ -12,6 +12,14 @@
 #include <errno.h>
 #include "ivshmem.h"
 
+enum ivshmem_registers {
+    IntrMask = 0,
+    IntrStatus = 4,
+    Doorbell = 8,
+    IVPosition = 12,
+    IVLiveList = 16
+};
+
 char * ivshmem_strings[32] = { "SET_SEMA", "DOWN_SEMA", "EMPTY", "WAIT_EVENT", "WAIT_EVENT_IRQ", "GET_POSN", "GET_LIVELIST", "SEMA_IRQ" };
 
 int ivshmem_recv(int fd)
@@ -39,7 +47,7 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 {
 
     int rv;
-    short *short_array;
+    int *array;
     short msg;
 
 #ifdef DEBUG
@@ -71,11 +79,10 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 #endif
 
     printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
-    short_array = (short *) regs;
+    array = (int *) regs;
     msg = ((destination_vm & 0xff) << 8) + (ivshmem_cmd & 0xff);
 
-    short_array[2] = msg;
-//    rv = ioctl(fd, ivshmem_cmd, destination_vm);
+    array[Doorbell/sizeof(int)] = msg;
 
 #ifdef DEBUG
     printf("[SENDIOCTL] rv is %d\n", rv);

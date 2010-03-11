@@ -10,10 +10,18 @@
 #include <errno.h>
 #include "ivshmem.h"
 
+enum ivshmem_registers {
+    IntrMask = 0,
+    IntrStatus = 4,
+    Doorbell = 8,
+    IVPosition = 12,
+    IVLiveList = 16
+};
+
 int main(int argc, char ** argv){
 
     void * memptr;
-    unsigned short * short_array;
+    unsigned int * map_array;
     int i, fd;
     int count;
     short msg, cmd, dest;
@@ -38,7 +46,7 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
-    short_array = (unsigned short *)memptr;
+    map_array = (unsigned int *)memptr;
 
     msg = ((dest & 0xff) << 8) + (cmd & 0xff);
 
@@ -46,7 +54,7 @@ int main(int argc, char ** argv){
 
     for (i = 0; i < count; i++) {
         printf("[UIO] ping #%d\n", i);
-        short_array[2] = msg;
+        map_array[Doorbell/sizeof(int)] = msg;
         sleep(1);
     }
 
