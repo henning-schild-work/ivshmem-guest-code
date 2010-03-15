@@ -1,0 +1,71 @@
+
+Device Specification for Inter-VM shared memory device
+------------------------------------------------------
+
+Qemu Command-line
+-----------------
+
+The command-line for inter-vm shared memory is as follows
+
+-ivshmem <size>,[unix:]name
+
+the <size> argument specifies the size of the shared memory object.  The second
+option specifies either a unix domain socket (when using the unix: prefix) or a
+name for the shared memory object.
+
+If a unix domain socket is specified, the guest will receive the shared object
+from the shared memory server listening on that socket and will support
+interrupts with the other guests using that server.  Each server only serves
+one memory object.
+
+If a name is specified on the command line (without 'unix:'), then the guest
+will open the POSIX shared memory object with that name (in /dev/shm) and the
+specified size.  The guest will NOT support interrupts but the shared memory
+object can be shared between multiple guests.
+
+The Inter-VM PCI device
+-----------------------
+
+BARs
+
+The device supports two BARs.  BAR0 is a 256-byte MMIO region to support registers
+and BAR1 is used to map the shared memory object from the host.  The size of
+BAR1 is specified on the command-line and must be a power of 2 in size.
+
+Registers
+
+The device currently supports 5 registers of 16-bits each.  Registers are used
+for synchronization between guests sharing the same memory object when
+interrupts are supported (this requires using the shared memory server).
+
+When using interrupts VMs communicate with a shared memory server that passes
+the shared memory object file descriptor using SCM_RIGHTS.  The server assigns
+each VM an ID number and sends this ID number to the Qemu process along with a
+series of eventfd file descriptors, one per guest using the shared memory
+server.  These eventfds will be used to send interrupts between guests.  Each
+guest listens on the eventfd corresponding to their ID and may use the others
+for sending interrupts to other guests.
+
+enum ivshmem_registers {
+    IntrMask = 0,
+    IntrStatus = 2,
+    Doorbell = 4,
+    IVPosition = 6,
+    IVLiveList = 8
+};
+
+The first two registers are the interrupt mask and status registers.
+Interrupts are triggered when a message is received on the guest's eventfd from
+another VM.  Writing to the 'Doorbell' register is how synchronization messages
+are sent to other VMs.
+
+The IVPosition register is read-only and reports the guest's ID number.  The
+IVLiveList register is also read-only and reports a bit vector of currently
+live VM IDs.
+
+The Doorbell register is 16-bits, but is treated as two 8-bit values.  The
+upper 8-bits are used for the destination VM ID.  The lower 8-bits are the
+value which will be written to the destination VM and what the guest status
+register will be set to when the interrupt is trigger is the destination guest.
+A value of 255 in the upper 8-bits will trigger a broadcast where the message
+will be sent to all other guests.
