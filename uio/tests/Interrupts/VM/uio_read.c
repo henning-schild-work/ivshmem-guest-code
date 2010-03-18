@@ -20,7 +20,7 @@ int main(int argc, char ** argv){
     }
 
     fd = open(argv[1], O_RDWR);
-    i = atoi(argv[2]);
+    count = atoi(argv[2]);
     printf("[UIO] opening file %s\n", argv[1]);
 
     printf("[UIO] reading\n");
