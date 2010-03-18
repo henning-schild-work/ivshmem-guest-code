@@ -15,9 +15,8 @@
 enum ivshmem_registers {
     IntrMask = 0,
     IntrStatus = 4,
-    Doorbell = 8,
-    IVPosition = 12,
-    IVLiveList = 16
+    IVPosition = 8,
+    Doorbell = 12
 };
 
 char * ivshmem_strings[32] = { "SET_SEMA", "DOWN_SEMA", "EMPTY", "WAIT_EVENT", "WAIT_EVENT_IRQ", "GET_POSN", "GET_LIVELIST", "SEMA_IRQ" };
