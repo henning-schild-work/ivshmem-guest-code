@@ -81,7 +81,7 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
     array = (int *) regs;
     msg = ((destination_vm & 0xff) << 8) + (ivshmem_cmd & 0xff);
 
-    array[Doorbell/sizeof(int)] = msg;
+    array[(Doorbell + destination_vm * sizeof(int))/sizeof(int)] = msg;
 
 #ifdef DEBUG
     printf("[SENDIOCTL] rv is %d\n", rv);
