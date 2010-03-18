@@ -15,9 +15,8 @@
 enum ivshmem_registers {
     IntrMask = 0,
     IntrStatus = 4,
-    Doorbell = 8,
-    IVPosition = 12,
-    IVLiveList = 16
+    IVPosition = 8,
+    Doorbell = 12
 };
 
 int main(int argc, char ** argv){
