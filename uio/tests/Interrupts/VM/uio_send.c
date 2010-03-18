@@ -13,8 +13,8 @@
 enum ivshmem_registers {
     IntrMask = 0,
     IntrStatus = 4,
-    Doorbell = 8,
-    IVPosition = 12,
+    IVPosition = 8,
+    Doorbell = 12,
     IVLiveList = 16
 };
 
@@ -24,7 +24,7 @@ int main(int argc, char ** argv){
     unsigned int * map_array;
     int i, fd;
     int count;
-    short msg, cmd, dest;
+    int msg, cmd, dest;
 
     if (argc != 5) {
         printf("USAGE: uio_ioctl <filename> <count> <cmd> <dest>\n");
@@ -48,13 +48,13 @@ int main(int argc, char ** argv){
 
     map_array = (unsigned int *)memptr;
 
-    msg = ((dest & 0xff) << 8) + (cmd & 0xff);
-
+//    msg = ((dest & 0xff) << 8) + (cmd & 0xff);
+    msg = cmd;
     printf("[UIO] writing %u\n", msg);
 
     for (i = 0; i < count; i++) {
         printf("[UIO] ping #%d\n", i);
-        map_array[Doorbell/sizeof(int)] = msg;
+        map_array[(Doorbell + dest * sizeof(int))/sizeof(int)] = msg;
         sleep(1);
     }
 
