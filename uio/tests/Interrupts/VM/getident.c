@@ -24,23 +24,14 @@ int main(int argc, char ** argv){
 	int fd;
 	int * regptr;
 	char * file;
-	int my_ioctl;
-	long ioctl_arg;
 
-	if (argc < 3) {
-		fprintf(stderr, "USAGE: guestlock <file> <ioctl> <ioctl_arg>\n");
+	if (argc != 2) {
+		fprintf(stderr, "USAGE: getident <file>\n");
         ivshmem_print_opts();
         exit(-1);
 	}
 
 	file = strdup(argv[1]);
-
-	my_ioctl = atol(argv[2]);
-	if (argc == 4) {
-		ioctl_arg = atol(argv[3]);
-	} else {
-		ioctl_arg = -1;
-	}
 
 	if ((fd = open(file, O_RDWR)) < 0) {
 		fprintf(stderr, "ERROR: cannot open file\n");
@@ -58,18 +49,4 @@ int main(int argc, char ** argv){
 	close(fd);
 
 	printf("exiting\n");
-/*
-	rv=pthread_spin_trylock(sl1);
-	printf("retval is %d\n", rv);
-
-	rv=pthread_spin_lock(sl1);
-	printf("retval is %d\n", rv);
-*/
-
-/*	rv=pthread_spin_lock(sl1);
-	printf("retval is %d\n", rv);
-
-	rv=pthread_spin_lock(sl1);
-	printf("retval is %d\n", rv);
-*/
 }
