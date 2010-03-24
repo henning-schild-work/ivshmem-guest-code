@@ -7,35 +7,46 @@ Qemu Command-line
 
 The command-line for inter-vm shared memory is as follows
 
--ivshmem <size>,[unix:]name
+-device ivshmem,size=<size>,[shm=<shm name>],[chardev=<chardev name>][vectors=<vectors>][irqfd]
 
-the <size> argument specifies the size of the shared memory object.  The second
-option specifies either a unix domain socket (when using the unix: prefix) or a
-name for the shared memory object.
+the <size> argument specifies the size of the shared memory object.  The shm
+parameter specifies the name of the shared memory object to be mapped.  The
+guest will open the POSIX shared memory object with <shm name> (in /dev/shm)
+and the specified size.  The guest will NOT support interrupts but the shared
+memory object can be shared between multiple guests.  If the user wants
+interrupts supported, a corresponding chardev socket device must be specified
+separately as follows with <chardev name> the same as the parameter to the
+ivshmem device.
 
-If a unix domain socket is specified, the guest will receive the shared object
+-chardev socket,path=<path to server>,id=<chardev name>
+
+If the chardev option is specified, the guest will receive the shared object
 from the shared memory server listening on that socket and will support
 interrupts with the other guests using that server.  Each server only serves
 one memory object.
 
-If a name is specified on the command line (without 'unix:'), then the guest
-will open the POSIX shared memory object with that name (in /dev/shm) and the
-specified size.  The guest will NOT support interrupts but the shared memory
-object can be shared between multiple guests.
+The "vectors" parameter specifies the number of MSI vectors the device
+will support.
+
+The "irqfd" option indicates this guest wants to use irqfd to inject interrupts
+directly to the guest.  If "irqfd" is specified then the number of MSI vectors
+must be 2 (vector 0 for guest joining/leaving, vector 1 to receive interrupts
+from other guests).
 
 The Inter-VM PCI device
 -----------------------
 
 BARs
 
-The device supports two BARs.  BAR0 is a 256-byte MMIO region to support registers
+The device supports two BARs.  BAR0 is a 1 Kbyte MMIO region to support registers
 and BAR1 is used to map the shared memory object from the host.  The size of
 BAR1 is specified on the command-line and must be a power of 2 in size.
 
 Registers
 
-The device currently supports 5 registers of 16-bits each.  Registers are used
-for synchronization between guests sharing the same memory object when
+The device currently supports 3 registers of 32-bits each plus a register for
+each guest up to a current limit of 253 guests ((1024 - 3*4)/4).  Registers
+are used for synchronization between guests sharing the same memory object when
 interrupts are supported (this requires using the shared memory server).
 
 When using interrupts VMs communicate with a shared memory server that passes
@@ -48,24 +59,44 @@ for sending interrupts to other guests.
 
 enum ivshmem_registers {
     IntrMask = 0,
-    IntrStatus = 2,
-    Doorbell = 4,
-    IVPosition = 6,
-    IVLiveList = 8
+    IntrStatus = 4,
+    IVPosition = 8,
+    Doorbell = 12
 };
 
-The first two registers are the interrupt mask and status registers.
-Interrupts are triggered when a message is received on the guest's eventfd from
-another VM.  Writing to the 'Doorbell' register is how synchronization messages
-are sent to other VMs.
+The first two registers are the interrupt mask and status registers.  Mask and
+status are only used with pin-based interrupts.  They are unused with MSI
+interrupts.  The IVPosition register is read-only and reports the guest's ID
+number.  Interrupts are triggered when a message is received on the guest's
+eventfd from another VM.  To trigger an event, a guest must write to another
+guest's Doorbell.  The "Doorbells" begin at offset 12.  A particular guest's
+doorbell offset in the MMIO region is equal to
 
-The IVPosition register is read-only and reports the guest's ID number.  The
-IVLiveList register is also read-only and reports a bit vector of currently
-live VM IDs.
+guest_id * 32 + Doorbell
 
-The Doorbell register is 16-bits, but is treated as two 8-bit values.  The
-upper 8-bits are used for the destination VM ID.  The lower 8-bits are the
-value which will be written to the destination VM and what the guest status
-register will be set to when the interrupt is trigger is the destination guest.
-A value of 255 in the upper 8-bits will trigger a broadcast where the message
-will be sent to all other guests.
+The doorbell register for each guest is 32-bits.
+
+The semantics of the value written to the doorbell depends on whether the
+device is using MSI or a regular pin-based interrupt.
+
+Regular Interrupts
+------------------
+
+If regular interrupts are used (due to either a guest not supporting MSI or the
+user specifying not to use them on the command-line) then the value written to
+a guest's doorbell is what the guest's status register will be set to.
+
+An status of (2^32 - 1) indicates that a new guest has joined.  Guests
+should not send a message of this value for any other reason.
+
+Message Signalled Interrupts
+----------------------------
+
+The important thing to remember with MSI is that it is only a signal, no
+status is set (since MSI interrupts are not shared).  All information other
+than the interrupt itself should be communicated via the shared memory region.
+
+If the device uses MSI then the value written to the doorbell is the MSI vector
+that will be raised.  Vector 0 is used to notify that a new guest has joined.
+Vector 0 cannot be triggered by another guest since a value of 0 does not
+trigger an eventfd.
