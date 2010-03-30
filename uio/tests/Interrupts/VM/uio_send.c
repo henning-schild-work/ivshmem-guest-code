@@ -48,13 +48,13 @@ int main(int argc, char ** argv){
 
     map_array = (unsigned int *)memptr;
 
-//    msg = ((dest & 0xff) << 8) + (cmd & 0xff);
-    msg = cmd;
+    msg = ((dest & 0xffff) << 16) + (cmd & 0xffff);
+//    msg = cmd;
     printf("[UIO] writing %u\n", msg);
 
     for (i = 0; i < count; i++) {
         printf("[UIO] ping #%d\n", i);
-        map_array[(Doorbell + dest * sizeof(int))/sizeof(int)] = msg;
+        map_array[Doorbell/sizeof(int)] = msg;
         sleep(1);
     }
 

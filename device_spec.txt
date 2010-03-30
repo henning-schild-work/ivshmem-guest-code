@@ -2,45 +2,15 @@
 Device Specification for Inter-VM shared memory device
 ------------------------------------------------------
 
-Qemu Command-line
------------------
-
-The command-line for inter-vm shared memory is as follows
-
--device ivshmem,size=<size>,[shm=<shm name>],[chardev=<chardev name>][vectors=<vectors>][irqfd]
-
-the <size> argument specifies the size of the shared memory object.  The shm
-parameter specifies the name of the shared memory object to be mapped.  The
-guest will open the POSIX shared memory object with <shm name> (in /dev/shm)
-and the specified size.  The guest will NOT support interrupts but the shared
-memory object can be shared between multiple guests.  If the user wants
-interrupts supported, a corresponding chardev socket device must be specified
-separately as follows with <chardev name> the same as the parameter to the
-ivshmem device.
-
--chardev socket,path=<path to server>,id=<chardev name>
-
-If the chardev option is specified, the guest will receive the shared object
-from the shared memory server listening on that socket and will support
-interrupts with the other guests using that server.  Each server only serves
-one memory object.
-
-The "vectors" parameter specifies the number of MSI vectors the device
-will support.
-
-The "irqfd" option indicates this guest wants to use irqfd to inject interrupts
-directly to the guest.  If "irqfd" is specified then the number of MSI vectors
-must be 2 (vector 0 for guest joining/leaving, vector 1 to receive interrupts
-from other guests).
-
 The Inter-VM PCI device
 -----------------------
 
 BARs
 
-The device supports two BARs.  BAR0 is a 1 Kbyte MMIO region to support registers
-and BAR1 is used to map the shared memory object from the host.  The size of
-BAR1 is specified on the command-line and must be a power of 2 in size.
+The device supports three BARs.  BAR0 is a 1 Kbyte MMIO region to support
+registers.  BAR1 is used for MSI-X when it is enabled in the device.  BAR2 is
+used to map the shared memory object from the host.  The size of BAR2 is
+specified on the command-line and must be a power of 2 in size.
 
 Registers
 
@@ -67,10 +37,9 @@ enum ivshmem_registers {
 The first two registers are the interrupt mask and status registers.  Mask and
 status are only used with pin-based interrupts.  They are unused with MSI
 interrupts.  The IVPosition register is read-only and reports the guest's ID
-number.  Interrupts are triggered when a message is received on the guest's
-eventfd from another VM.  To trigger an event, a guest must write to another
-guest's Doorbell.  The "Doorbells" begin at offset 12.  A particular guest's
-doorbell offset in the MMIO region is equal to
+number.  To interrupt another guest, a guest must write to another guest's
+Doorbell.  The "Doorbells" begin at offset 12.  A particular guest's doorbell
+offset in the MMIO region is equal to
 
 guest_id * 32 + Doorbell
 
@@ -84,7 +53,7 @@ Regular Interrupts
 
 If regular interrupts are used (due to either a guest not supporting MSI or the
 user specifying not to use them on the command-line) then the value written to
-a guest's doorbell is what the guest's status register will be set to.
+a guest's doorbell is what the receiving guest's status register will be set to.
 
 An status of (2^32 - 1) indicates that a new guest has joined.  Guests
 should not send a message of this value for any other reason.
@@ -100,3 +69,11 @@ If the device uses MSI then the value written to the doorbell is the MSI vector
 that will be raised.  Vector 0 is used to notify that a new guest has joined.
 Vector 0 cannot be triggered by another guest since a value of 0 does not
 trigger an eventfd.
+
+ioeventfd/irqfd
+---------------
+
+ioeventfd/irqfd is turned on by irqfd=on passed to the device parameter (it is
+off by default).  When using ioeventfd/irqfd the only interrupt value that can
+be passed to another guest is 1 despite what value is written to a guest's
+Doorbell.
