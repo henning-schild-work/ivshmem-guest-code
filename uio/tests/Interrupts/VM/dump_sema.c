@@ -57,7 +57,7 @@ int main(int argc, char ** argv){
 
     count = num_chunks;
     for (k = 0; k < 2; k++){
-        int oldrv;
+        int oldrv = -1;
 
         for (j = 0; j < num_chunks; j++){
             int rv;
@@ -74,13 +74,17 @@ int main(int argc, char ** argv){
                 rv = ivshmem_recv(fd);
 
                 if (rv > 0) {
+                    if (oldrv == -1)
+                        oldrv = rv - 1;
                     count += rv - oldrv;
                     printf("rv = %d\n", rv);
                 }
+
+                oldrv = rv;
             } while (count <= 0);
 
             for (i = 0; i < CHUNK_SZ/sizeof(long); i++){
-	            long_array[offset + i]=rand();
+                long_array[offset + i]=rand();
             }
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);

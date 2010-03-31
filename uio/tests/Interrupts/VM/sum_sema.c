@@ -53,7 +53,7 @@ int main(int argc, char ** argv){
 
     count = 0;
     for (k = 0; k < 2; k++){
-        int oldrv;
+        int oldrv = -1;
 
         for (j = 0; j < num_chunks; j++) {
 
@@ -71,8 +71,13 @@ int main(int argc, char ** argv){
             rv = ivshmem_recv(fd);
 
             if (rv > 0)  {
+                if (oldrv == -1)
+                    oldrv = rv - 1; // read returns the total # of interrupts
+                                    // ever which would lead to overflow
+
                 count += rv - oldrv;
                 printf("rv = %d\n", rv);
+		        oldrv = rv;
             }
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
