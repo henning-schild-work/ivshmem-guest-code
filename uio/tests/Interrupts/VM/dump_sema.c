@@ -85,7 +85,7 @@ int main(int argc, char ** argv){
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             count--;
-            ivshmem_send(regptr, SEMA_IRQ, other);
+            ivshmem_send(regptr, 1, other);
 
             SHA1_Final(md,&context);
 

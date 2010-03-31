@@ -79,9 +79,9 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 
     printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
     array = (int *) regs;
-    msg = ((destination_vm & 0xff) << 8) + (ivshmem_cmd & 0xff);
+    msg = ((destination_vm & 0xffff) << 16) + (ivshmem_cmd & 0xffff);
 
-    array[(Doorbell + destination_vm * sizeof(int))/sizeof(int)] = msg;
+    array[Doorbell/sizeof(int)] = msg;
 
 #ifdef DEBUG
     printf("[SENDIOCTL] rv is %d\n", rv);

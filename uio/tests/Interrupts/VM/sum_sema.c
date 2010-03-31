@@ -15,7 +15,6 @@
 
 int do_select(int fd);
 
-
 int main(int argc, char ** argv){
 
     long num_chunks, length;
@@ -50,8 +49,6 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
-    ivshmem_send(memptr, SET_SEMA, (void*)0);
-
     printf("[SUM] reading %d chunks\n", num_chunks);
 
     count = 0;
@@ -80,7 +77,7 @@ int main(int argc, char ** argv){
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             count--;
-            ivshmem_send(regptr, SEMA_IRQ, (void *)other);
+            ivshmem_send(regptr, 1, (void *)other);
 
             SHA1_Final(md,&context);
 
