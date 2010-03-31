@@ -47,7 +47,7 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 
     int rv;
     int *array;
-    short msg;
+    int msg;
 
 #ifdef DEBUG
 	switch (ivshmem_cmd) {
