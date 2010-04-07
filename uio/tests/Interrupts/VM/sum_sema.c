@@ -19,9 +19,7 @@ int main(int argc, char ** argv){
 
     long num_chunks, length;
     void * memptr, *regptr;
-    long * long_array;
     int i,fd,j, k;
-    struct test * myptr;
     int other, count;
 
     if (argc != 4){
@@ -35,21 +33,21 @@ int main(int argc, char ** argv){
     other = atoi(argv[3]);
 
     length=num_chunks*CHUNK_SZ;
-    printf("[SUM] length is %d\n", length);
+    printf("[SUM] length is %ld\n", length);
 
-    if ((regptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == -1){
-        printf("mmap failed (0x%x)\n", memptr);
+    if ((regptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == (void *) -1){
+        printf("mmap failed (0x%p)\n", regptr);
         close (fd);
         exit (-1);
     }
 
-    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == -1){
-        printf("mmap failed (0x%x)\n", memptr);
+    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == (void *) -1){
+        printf("mmap failed (0x%p)\n", memptr);
         close (fd);
         exit (-1);
     }
 
-    printf("[SUM] reading %d chunks\n", num_chunks);
+    printf("[SUM] reading %ld chunks\n", num_chunks);
 
     count = 0;
     for (k = 0; k < 2; k++){
@@ -58,10 +56,8 @@ int main(int argc, char ** argv){
         for (j = 0; j < num_chunks; j++) {
 
             int rv;
-
             SHA_CTX context;
             unsigned char md[20];
-            long offset = j*(CHUNK_SZ/sizeof(long));
 
             memset(md,0,20);
 
@@ -82,7 +78,7 @@ int main(int argc, char ** argv){
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             count--;
-            ivshmem_send(regptr, 1, (void *)other);
+            ivshmem_send(regptr, 1, other);
 
             SHA1_Final(md,&context);
 

@@ -38,10 +38,9 @@ int main(int argc, char ** argv){
     dest = (unsigned short) atoi(argv[4]);
 
     printf("[UIO] count is %d\n", count);
-    printf("[UIO] size of short %d\n", sizeof(unsigned short));
 
-    if ((memptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == -1){
-        printf("mmap failed (0x%x)\n", memptr);
+    if ((memptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == (void *) -1){
+        printf("mmap failed (0x%p)\n", memptr);
         close (fd);
         exit (-1);
     }

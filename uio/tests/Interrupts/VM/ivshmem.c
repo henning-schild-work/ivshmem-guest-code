@@ -45,7 +45,6 @@ int ivshmem_recv(int fd)
 int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 {
 
-    int rv;
     int *array;
     int msg;
 
@@ -100,9 +99,11 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 	rv=pthread_spin_lock(sl1);
 	printf("retval is %d\n", rv);
 */
+
+    return 0;
 }
 
-int ivshmem_print_opts(void)
+void ivshmem_print_opts(void)
 {
 #ifdef DEBUG
     printf("ivshmem parameters: \n");

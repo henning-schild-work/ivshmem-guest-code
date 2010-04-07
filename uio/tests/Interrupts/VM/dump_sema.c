@@ -38,16 +38,16 @@ int main(int argc, char ** argv){
     length=num_chunks*CHUNK_SZ;
     printf("[DUMP] size is %d\n", length);
 
-    if ((regptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == -1)
+    if ((regptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == (void *) -1)
     {
-        printf("mmap failed (0x%x)\n", memptr);
+        printf("mmap failed (0x%p)\n", regptr);
         close (fd);
         exit (-1);
     }
 
-    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == -1)
+    if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == (void *) -1)
     {
-        printf("mmap failed (0x%x)\n", memptr);
+        printf("mmap failed (0x%p)\n", memptr);
         close (fd);
         exit (-1);
     }
@@ -61,9 +61,8 @@ int main(int argc, char ** argv){
 
         for (j = 0; j < num_chunks; j++){
             int rv;
-
             SHA_CTX context;
-            char md[20];
+            unsigned char md[20];
             long offset = j*(CHUNK_SZ/sizeof(long));
 
             memset(md,0,20);
@@ -87,11 +86,11 @@ int main(int argc, char ** argv){
                 long_array[offset + i]=rand();
             }
 
-            SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
+            SHA1_Update(&context, memptr + CHUNK_SZ*j, CHUNK_SZ);
             count--;
             ivshmem_send(regptr, 1, other);
 
-            SHA1_Final(md,&context);
+            SHA1_Final(md, &context);
 
             printf("[CHUNK %d] ", j);
             for(i = 0; i < SHA_DIGEST_LENGTH; ++i )
@@ -103,7 +102,7 @@ int main(int argc, char ** argv){
         }
     }
 
-    printf("[DUMP] munmap is unmapping %x\n", memptr);
+    printf("[DUMP] munmap is unmapping %p\n", memptr);
     munmap(memptr, length);
     munmap(regptr, 256);
 

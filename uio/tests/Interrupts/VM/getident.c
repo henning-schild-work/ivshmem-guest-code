@@ -23,7 +23,6 @@ int main(int argc, char ** argv){
 
 	int fd;
 	int * regptr;
-	char * file;
 
 	if (argc != 2) {
 		fprintf(stderr, "USAGE: getident <file>\n");
@@ -31,9 +30,7 @@ int main(int argc, char ** argv){
         exit(-1);
 	}
 
-	file = strdup(argv[1]);
-
-	if ((fd = open(file, O_RDWR)) < 0) {
+	if ((fd = open(argv[1], O_RDWR)) < 0) {
 		fprintf(stderr, "ERROR: cannot open file\n");
 		exit(-1);
 	}
