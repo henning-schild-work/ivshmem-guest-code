@@ -35,7 +35,7 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    if ((map_region=mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) < 0){
+    if ((map_region=mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 2 * getpagesize())) < 0){
         fprintf(stderr, "ERROR: cannot mmap file\n");
     } else {
         printf("[SUM] mapped to %p\n", map_region);
