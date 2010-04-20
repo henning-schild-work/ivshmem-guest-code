@@ -35,7 +35,8 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    if ((map_region=mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 2 * getpagesize())) < 0){
+    /* With UIO drivers, the offset selects the memory region beginning at 0 and counting by page offsets */
+    if ((map_region=mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) < 0){
         fprintf(stderr, "ERROR: cannot mmap file\n");
     } else {
         printf("[SUM] mapped to %p\n", map_region);

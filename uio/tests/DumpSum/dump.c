@@ -30,6 +30,7 @@ int main(int argc, char ** argv){
 
     fd=open(argv[1], O_RDWR);
 
+    /* With UIO the offset selects the memory region --> N * getpagesize() for the Nth memory region */
     if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == (caddr_t)-1){
         printf("mmap failed (0x%x)\n", memptr);
         close (fd);
