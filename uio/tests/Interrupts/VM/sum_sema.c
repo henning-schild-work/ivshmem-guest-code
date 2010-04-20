@@ -12,6 +12,8 @@
 #include "ivshmem.h"
 
 #define CHUNK_SZ (1024l*1024l*4l)
+#define MSI_VECTOR 0 /* the default vector */
+
 
 int do_select(int fd);
 
@@ -78,7 +80,7 @@ int main(int argc, char ** argv){
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
             count--;
-            ivshmem_send(regptr, 1, other);
+            ivshmem_send(regptr, MSI_VECTOR, other);
 
             SHA1_Final(md,&context);
 
