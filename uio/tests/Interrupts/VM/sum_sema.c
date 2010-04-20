@@ -65,17 +65,18 @@ int main(int argc, char ** argv){
 
             SHA1_Init(&context);
 
-            do_select(fd);
-            rv = ivshmem_recv(fd);
+            if (count <= 0) {
+                do_select(fd);
+                rv = ivshmem_recv(fd);
 
-            if (rv > 0)  {
-                if (oldrv == -1)
-                    oldrv = rv - 1; // read returns the total # of interrupts
+                if (rv > 0)  {
+                    if (oldrv == -1)
+                        oldrv = rv - 1; // read returns the total # of interrupts
                                     // ever which would lead to overflow
-
-                count += rv - oldrv;
-                printf("rv = %d\n", rv);
-		        oldrv = rv;
+                    count += rv - oldrv;
+                    printf("rv = %d\n", rv);
+                    oldrv = rv;
+                }
             }
 
             SHA1_Update(&context,memptr + CHUNK_SZ*j, CHUNK_SZ);
