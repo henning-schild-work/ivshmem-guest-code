@@ -36,7 +36,6 @@ int main(int argc, char ** argv){
     param = atol(argv[2]);
     other = atoi(argv[3]);
 
-    length=num_chunks*CHUNK_SZ;
     printf("[SUM] length is %ld\n", length);
 
     if ((regptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == (void *) -1){
@@ -45,6 +44,7 @@ int main(int argc, char ** argv){
         exit (-1);
     }
 
+    length = CHUNK_SZ;
     if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == (void *) -1){
         printf("mmap failed (0x%p)\n", memptr);
         close (fd);

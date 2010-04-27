@@ -36,7 +36,7 @@ int main(int argc, char ** argv){
     param = atol(argv[2]);
     other = atoi(argv[3]);
 
-    length=num_chunks*CHUNK_SZ;
+    length = CHUNK_SZ;
     printf("[DUMP] size is %d\n", length);
 
     if ((regptr = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 * getpagesize())) == (void *) -1)
