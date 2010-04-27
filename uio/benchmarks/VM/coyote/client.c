@@ -23,6 +23,7 @@ int main(int argc, char ** argv){
     void * memptr, *regptr;
     int fd, rv;
     int i, j, k;
+    long param;
     int other;
 
     if (argc != 4){
