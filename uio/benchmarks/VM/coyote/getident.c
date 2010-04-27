@@ -26,7 +26,6 @@ int main(int argc, char ** argv){
 
 	if (argc != 2) {
 		fprintf(stderr, "USAGE: getident <file>\n");
-        ivshmem_print_opts();
         exit(-1);
 	}
 

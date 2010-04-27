@@ -20,20 +20,20 @@ int main(int argc, char ** argv){
     int fd, length=4*1024;
     void * memptr, *regptr;
     long * long_array;
-    long num_chunks;
+    long param;
     int other;
     int i, j, k;
     int count;
 
     if (argc != 4){
-        printf("USAGE: dump_sema <filename> <num chunks> <other vm>\n");
+        printf("USAGE: server <filename> <param> <other vm>\n");
         exit(-1);
     }
 
-    fd=open(argv[1], O_RDWR|O_NONBLOCK);
+    fd = open(argv[1], O_RDWR|O_NONBLOCK);
     printf("[DUMP] opening file %s\n", argv[1]);
 
-    num_chunks=atol(argv[2]);
+    param = atol(argv[2]);
     other = atoi(argv[3]);
 
     length=num_chunks*CHUNK_SZ;

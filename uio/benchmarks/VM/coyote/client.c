@@ -26,13 +26,13 @@ int main(int argc, char ** argv){
     int other;
 
     if (argc != 4){
-        printf("USAGE: sum <filename> <num chunks> <other vm>\n");
+        printf("USAGE: sum <filename> <param> <other vm>\n");
         exit(-1);
     }
 
-    fd=open(argv[1], O_RDWR);
+    fd = open(argv[1], O_RDWR);
     printf("[SUM] opening file %s\n", argv[1]);
-    num_chunks=atol(argv[2]);
+    param = atol(argv[2]);
     other = atoi(argv[3]);
 
     length=num_chunks*CHUNK_SZ;
