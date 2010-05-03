@@ -1,19 +1,13 @@
 CC=gcc
 CFLAGS= -g -lcrypto -lrt
 
-all: sum dump writedump unlink_mem
+all: sum dump
 
 sum:	sum.c
-	$(CC) $^ -o $@ $(CFLAGS)
-
-writedump:	writedump.c
 	$(CC) $^ -o $@ $(CFLAGS)
 
 dump:	dump.c
 	$(CC) $^ -o $@ $(CFLAGS)
 
-unlink_mem:	unlink_mem.c
-	$(CC) $^ -o $@ $(CFLAGS)
-
 clean:
-	rm -f sum dump unlink_mem writedump
+	rm -f sum dump
