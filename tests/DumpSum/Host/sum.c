@@ -25,7 +25,7 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    size=atol(argv[2])*1024*1024;
+    size = atol(argv[2])*1024*1024;
     memset(file,0,1024);
     snprintf(file, 1024, "/%s",argv[1]);
 
@@ -46,9 +46,12 @@ int main(int argc, char ** argv){
 
     memset(md,0,20);
 
+    long_array=map_region;
     SHA1_Init(&context);
     SHA1_Update(&context,map_region,size);
     SHA1_Final(md,&context);
+
+    printf("%lx %lx\n", long_array[0], long_array[size/sizeof(long) - 1]);
 
     printf("[SUM] ");
     for(i = 0; i < SHA_DIGEST_LENGTH; ++i )
