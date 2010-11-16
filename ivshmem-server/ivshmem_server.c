@@ -26,7 +26,7 @@
 typedef struct server_state {
     vmguest_t *live_vms;
     int nr_allocated_vms;
-    int shm_size;
+    long shm_size;
     long live_count;
     long total_count;
     int shm_fd;
@@ -310,7 +310,7 @@ void parse_args(int argc, char **argv, server_state_t * s) {
     }
 
     printf("shared object: %s\n", s->shmobj);
-    printf("shared object size: %d (bytes)\n", s->shm_size);
+    printf("shared object size: %ld (bytes)\n", s->shm_size);
 
 }
 
