@@ -29,13 +29,14 @@ int ivshmem_recv(int fd)
     buf = 0;
     rv = read(fd, &buf, sizeof(buf));
 
+#ifdef DEBUG
     printf("[RECVIOCTL] rv is %d\n", rv);
-
     if (rv == -EAGAIN) {
         fprintf(stderr, "EAGAIN\n");
     } else if (rv < 0) {
         fprintf(stderr, "other error\n");
     }
+#endif
 
     /* TODO: check status register */
 
@@ -74,9 +75,9 @@ int ivshmem_send(void * regs, int ivshmem_cmd, int destination_vm)
 		default:
 			printf("[SENDIOCTL] unknown ioctl\n");
 	}
+    printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
 #endif
 
-    printf("[SENDIOCTL] %s\n", ivshmem_strings[ivshmem_cmd]);
     array = (int *) regs;
     msg = ((destination_vm & 0xffff) << 16) + (ivshmem_cmd & 0xffff);
 

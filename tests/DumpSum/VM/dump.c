@@ -31,17 +31,20 @@ int main(int argc, char ** argv){
     fd=open(argv[1], O_RDWR);
 
     if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == (caddr_t)-1){
-        printf("mmap failed (0x%x)\n", memptr);
+        printf("mmap failed (0x%p)\n", memptr);
         close (fd);
         exit (-1);
     }
 
     srand(time());
+
+	memset(memptr, 0xa5a5a5a5, length); 
+/*
     long_array=(long *)memptr;
     for (i=0; i < length/sizeof(long); i++){
         long_array[i]=rand();
     }
-
+*/
     memset(md,0,20);
 
     SHA1_Init(&context);
@@ -56,7 +59,7 @@ int main(int argc, char ** argv){
     }
     printf("\n");
 
-    printf("munmap is unmapping %x\n", memptr);
+    printf("munmap is unmapping %p\n", memptr);
     munmap(memptr, length);
 
     close(fd);

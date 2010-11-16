@@ -11,7 +11,7 @@
 
 int main(int argc, char ** argv){
 
-    int fd, length=4*1024;
+    long fd, length=4*1024;
     void * memptr;
     long * long_array;
     int i;
@@ -24,25 +24,30 @@ int main(int argc, char ** argv){
     }
 
     printf("[DUMP] opening file %s\n", argv[1]);
-    length=atoi(argv[2])*1024*1024;
+    length=atol(argv[2])*1024*1024;
 //    length=atoi(argv[2]);
-    printf("[DUMP] size is %d\n", length);
+    printf("[DUMP] size is %ld\n", length);
 
     fd=open(argv[1], O_RDWR);
 
     /* With UIO the offset selects the memory region --> N * getpagesize() for the Nth memory region */
     if ((memptr = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 1 * getpagesize())) == (caddr_t)-1){
-        printf("mmap failed (0x%x)\n", memptr);
+        printf("mmap failed (0x%p)\n", memptr);
         close (fd);
         exit (-1);
     }
+
+    memset(memptr, 0xa5, length);
+/*
+	// if you want to generate a random use this block
+	// instead of the memset above
 
     srand(time());
     long_array=(long *)memptr;
     for (i=0; i < length/sizeof(long); i++){
         long_array[i]=rand();
     }
-
+*/
     memset(md,0,20);
 
     SHA1_Init(&context);
@@ -57,7 +62,7 @@ int main(int argc, char ** argv){
     }
     printf("\n");
 
-    printf("munmap is unmapping %x\n", memptr);
+    printf("munmap is unmapping %p\n", memptr);
     munmap(memptr, length);
 
     close(fd);

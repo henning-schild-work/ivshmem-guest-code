@@ -42,7 +42,11 @@ int main(int argc, char ** argv){
         printf("[SUM] mapped to %p\n", map_region);
     }
 
+    long_array=map_region;
+
     memset(md,0,20);
+
+    printf("%lx %lx\n", long_array[0], long_array[size/sizeof(long) - 1]);
 
     SHA1_Init(&context);
     SHA1_Update(&context,map_region,size);
