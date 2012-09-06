@@ -58,11 +58,15 @@ int main(int argc, char ** argv)
     /* open shared memory file  */
     if ((s->shm_fd = shm_open(s->shmobj, O_CREAT|O_RDWR, S_IRWXU)) < 0)
     {
-        fprintf(stderr, "kvm_ivshmem: could not open shared file\n");
+        fprintf(stderr, "ivshmem server: could not open shared file\n");
         exit(-1);
     }
 
-    ftruncate(s->shm_fd, s->shm_size);
+    if (ftruncate(s->shm_fd, s->shm_size) != 0)
+    {
+        fprintf(stderr, "ivshmem server: could not truncate memory region\n");
+        exit(-1);
+    }
 
     s->conn_socket = create_listening_socket(s->path);
 
