@@ -122,7 +122,7 @@ error:
 
 }
 
-static int __devinit ivshmem_pci_probe(struct pci_dev *dev,
+static int ivshmem_pci_probe(struct pci_dev *dev,
 					const struct pci_device_id *id)
 {
 	struct uio_info *info;
@@ -225,7 +225,7 @@ static void ivshmem_pci_remove(struct pci_dev *dev)
 	kfree (info);
 }
 
-static struct pci_device_id ivshmem_pci_ids[] __devinitdata = {
+static struct pci_device_id ivshmem_pci_ids[] = {
 	{
 		.vendor =	0x1af4,
 		.device =	0x1110,
