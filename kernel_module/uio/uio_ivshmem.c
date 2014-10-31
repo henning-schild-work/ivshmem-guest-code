@@ -186,6 +186,7 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 		writel(0xffffffff, info->mem[0].internal_addr + IntrMask);
 	} else {
 		printk(KERN_INFO "MSI-X enabled\n");
+		pci_set_master(dev);
 		info->irq = -1;
 	}
 
