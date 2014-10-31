@@ -209,7 +209,8 @@ out_release:
 out_disable:
 	pci_disable_device(dev);
 out_free:
-	kfree (info);
+	kfree(ivshmem_info);
+	kfree(info);
 	return -ENODEV;
 }
 
