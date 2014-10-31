@@ -149,7 +149,8 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	if (!info->mem[0].addr)
 		goto out_release;
 
-	info->mem[0].size = pci_resource_len(dev, 0);
+	info->mem[0].size = (pci_resource_len(dev, 0) + PAGE_SIZE - 1)
+		& PAGE_MASK;
 	info->mem[0].internal_addr = pci_ioremap_bar(dev, 0);
 	if (!info->mem[0].internal_addr) {
 		goto out_release;
