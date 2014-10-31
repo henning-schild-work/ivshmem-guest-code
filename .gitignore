@@ -1,3 +1,9 @@
+kernel_module/uio/Module.symvers
+kernel_module/uio/modules.order
+kernel_module/uio/.tmp_versions
+kernel_module/uio/*.ko
+kernel_module/uio/*.mod.c
+kernel_module/uio/*o.cmd
 *.class
 *.so
 *.o
