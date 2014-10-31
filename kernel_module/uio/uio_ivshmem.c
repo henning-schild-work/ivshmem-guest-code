@@ -12,8 +12,7 @@
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/uio_driver.h>
-
-#include <asm/io.h>
+#include <linux/io.h>
 
 #define IntrStatus 0x04
 #define IntrMask 0x00
@@ -43,7 +42,7 @@ static irqreturn_t ivshmem_handler(int irq, struct uio_info *dev_info)
 static irqreturn_t ivshmem_msix_handler(int irq, void *opaque)
 {
 
-	struct uio_info * dev_info = (struct uio_info *) opaque;
+	struct uio_info *dev_info = (struct uio_info *) opaque;
 
 	/* we have to do this explicitly when using MSI-X */
 	uio_event_notify(dev_info);
@@ -66,14 +65,14 @@ static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
 
 	ivs_info->nvectors = nvectors;
 
-	ivs_info->msix_entries = kmalloc(nvectors * sizeof *
-						ivs_info->msix_entries,
-						GFP_KERNEL);
+	ivs_info->msix_entries = kmalloc(nvectors *
+					 sizeof(*ivs_info->msix_entries),
+					 GFP_KERNEL);
 	if (ivs_info->msix_entries == NULL)
 		return -ENOSPC;
 
-	ivs_info->msix_names = kmalloc(nvectors * sizeof *ivs_info->msix_names,
-			GFP_KERNEL);
+	ivs_info->msix_names = kmalloc(nvectors * sizeof(*ivs_info->msix_names),
+				       GFP_KERNEL);
 	if (ivs_info->msix_names == NULL) {
 		kfree(ivs_info->msix_entries);
 		return -ENOSPC;
@@ -90,17 +89,18 @@ static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
 		err = pci_enable_msix(ivs_info->dev, ivs_info->msix_entries,
 					ivs_info->nvectors);
 		if (err) {
-			printk(KERN_INFO "no MSI (%d). Back to INTx.\n", err);
+			dev_info(&ivs_info->dev->dev,
+				 "no MSI (%d). Back to INTx.\n", err);
 			goto error;
 		}
 	}
 
 	if (err)
-	    goto error;
+		goto error;
 
 	for (i = 0; i < ivs_info->nvectors; i++) {
 
-		snprintf(ivs_info->msix_names[i], sizeof *ivs_info->msix_names,
+		snprintf(ivs_info->msix_names[i], sizeof(*ivs_info->msix_names),
 			"%s-config", name);
 
 		err = request_irq(ivs_info->msix_entries[i].vector,
@@ -126,7 +126,7 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 					const struct pci_device_id *id)
 {
 	struct uio_info *info;
-	struct ivshmem_info * ivshmem_info;
+	struct ivshmem_info *ivshmem_info;
 	int nvectors = 4;
 
 	info = kzalloc(sizeof(struct uio_info), GFP_KERNEL);
@@ -152,9 +152,8 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	info->mem[0].size = (pci_resource_len(dev, 0) + PAGE_SIZE - 1)
 		& PAGE_MASK;
 	info->mem[0].internal_addr = pci_ioremap_bar(dev, 0);
-	if (!info->mem[0].internal_addr) {
+	if (!info->mem[0].internal_addr)
 		goto out_release;
-	}
 
 	info->mem[0].memtype = UIO_MEM_PHYS;
 
@@ -162,16 +161,10 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	if (!info->mem[1].addr)
 		goto out_unmap;
 
-    info->mem[1].internal_addr = ioremap_cache(pci_resource_start(dev, 2),
-				     pci_resource_len(dev, 2));
+	info->mem[1].internal_addr = ioremap_cache(pci_resource_start(dev, 2),
+						   pci_resource_len(dev, 2));
 	if (!info->mem[1].internal_addr)
 		goto out_unmap;
-
-#if 0
-    info->mem[1].internal_addr = pci_ioremap_bar(dev, 2);
-	if (!info->mem[1].internal_addr)
-		goto out_unmap;
-#endif
 
 	info->mem[1].size = pci_resource_len(dev, 2);
 	info->mem[1].memtype = UIO_MEM_PHYS;
@@ -180,13 +173,13 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	ivshmem_info->dev = dev;
 
 	if (request_msix_vectors(ivshmem_info, nvectors) != 0) {
-		printk(KERN_INFO "regular IRQs\n");
+		dev_info(&ivshmem_info->dev->dev, "regular IRQs\n");
 		info->irq = dev->irq;
 		info->irq_flags = IRQF_SHARED;
 		info->handler = ivshmem_handler;
 		writel(0xffffffff, info->mem[0].internal_addr + IntrMask);
 	} else {
-		printk(KERN_INFO "MSI-X enabled\n");
+		dev_info(&ivshmem_info->dev->dev, "MSI-X enabled\n");
 		pci_set_master(dev);
 		info->irq = -1;
 	}
@@ -198,7 +191,6 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 		goto out_unmap2;
 
 	pci_set_drvdata(dev, info);
-
 
 	return 0;
 out_unmap2:
@@ -224,7 +216,7 @@ static void ivshmem_pci_remove(struct pci_dev *dev)
 	pci_disable_device(dev);
 	iounmap(info->mem[0].internal_addr);
 
-	kfree (info);
+	kfree(info);
 }
 
 static struct pci_device_id ivshmem_pci_ids[] = {
