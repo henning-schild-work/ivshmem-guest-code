@@ -4,6 +4,16 @@ kernel_module/uio/.tmp_versions
 kernel_module/uio/*.ko
 kernel_module/uio/*.mod.c
 kernel_module/uio/*o.cmd
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+uio/tests/Interrupts/VM/Makefile
+uio/tests/Interrupts/VM/dump_sema
+uio/tests/Interrupts/VM/getident
+uio/tests/Interrupts/VM/libivshmem.a
+uio/tests/Interrupts/VM/sum_sema
+uio/tests/Interrupts/VM/uio_read
+uio/tests/Interrupts/VM/uio_send
 *.class
 *.so
 *.o
