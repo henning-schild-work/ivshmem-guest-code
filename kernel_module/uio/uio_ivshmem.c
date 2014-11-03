@@ -118,6 +118,7 @@ static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
 error:
 	kfree(ivs_info->msix_entries);
 	kfree(ivs_info->msix_names);
+	ivs_info->nvectors = 0;
 	return err;
 
 }
@@ -188,13 +189,13 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	info->version = "0.0.1";
 
 	if (uio_register_device(&dev->dev, info))
-		goto out_unmap2;
+		goto out_unmap1;
 
-	pci_set_drvdata(dev, info);
+	pci_set_drvdata(dev, ivshmem_info);
 
 	return 0;
-out_unmap2:
-	iounmap(info->mem[2].internal_addr);
+out_unmap1:
+	iounmap(info->mem[1].internal_addr);
 out_unmap:
 	iounmap(info->mem[0].internal_addr);
 out_release:
@@ -209,14 +210,23 @@ out_free:
 
 static void ivshmem_pci_remove(struct pci_dev *dev)
 {
-	struct uio_info *info = pci_get_drvdata(dev);
+	struct ivshmem_info *ivshmem_info = pci_get_drvdata(dev);
+	struct uio_info *info = ivshmem_info->uio;
 
+	pci_set_drvdata(dev, NULL);
 	uio_unregister_device(info);
+	if (ivshmem_info->nvectors) {
+		free_msix_vectors(ivshmem_info, ivshmem_info->nvectors);
+		pci_disable_msix(dev);
+		kfree(ivshmem_info->msix_entries);
+		kfree(ivshmem_info->msix_names);
+	}
+	iounmap(info->mem[1].internal_addr);
+	iounmap(info->mem[0].internal_addr);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-	iounmap(info->mem[0].internal_addr);
-
 	kfree(info);
+	kfree(ivshmem_info);
 }
 
 static struct pci_device_id ivshmem_pci_ids[] = {
