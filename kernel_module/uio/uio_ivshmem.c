@@ -2,6 +2,7 @@
  * UIO IVShmem Driver
  *
  * (C) 2009 Cam Macdonell
+ * (C) 2014 Henning Schild
  * based on Hilscher CIF card driver (C) 2007 Hans J. Koch <hjk@linutronix.de>
  *
  * Licensed under GPL version 2 only.
@@ -16,6 +17,9 @@
 
 #define IntrStatus 0x04
 #define IntrMask 0x00
+
+#define JAILHOUSE_CFG_SHMEM_PTR	0x40
+#define JAILHOUSE_CFG_SHMEM_SZ	0x48
 
 struct ivshmem_info {
 	struct uio_info *uio;
@@ -159,11 +163,27 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	info->mem[0].memtype = UIO_MEM_PHYS;
 	info->mem[0].name = "registers";
 
-	info->mem[1].addr = pci_resource_start(dev, 2);
+	info->mem[1].size = pci_resource_len(dev, 2);
+
+	/* if we are dealing with a jailhouse provided ivshmem device the
+	 * memory bar will not exist. Location and size will be in custom
+	 * config space registers instead */
+	if (info->mem[1].size == 0) {
+		pci_read_config_dword(dev, JAILHOUSE_CFG_SHMEM_PTR,
+			(u32*)&info->mem[1].addr);
+		pci_read_config_dword(dev, JAILHOUSE_CFG_SHMEM_PTR + 4,
+			((u32*)&info->mem[1].addr) + 1);
+		pci_read_config_dword(dev, JAILHOUSE_CFG_SHMEM_SZ,
+			(u32*)&info->mem[1].size);
+		pci_read_config_dword(dev, JAILHOUSE_CFG_SHMEM_SZ + 4,
+			((u32*)&info->mem[1].size) + 1);
+		dev_info(&dev->dev, "using jailhouse mode\n");
+	} else {
+		info->mem[1].addr = pci_resource_start(dev, 2);
+	}
 	if (!info->mem[1].addr)
 		goto out_unmap;
 
-	info->mem[1].size = pci_resource_len(dev, 2);
 	info->mem[1].memtype = UIO_MEM_PHYS;
 	info->mem[1].name = "shmem";
 
