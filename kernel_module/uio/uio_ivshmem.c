@@ -162,11 +162,6 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	if (!info->mem[1].addr)
 		goto out_unmap;
 
-	info->mem[1].internal_addr = ioremap_cache(pci_resource_start(dev, 2),
-						   pci_resource_len(dev, 2));
-	if (!info->mem[1].internal_addr)
-		goto out_unmap;
-
 	info->mem[1].size = pci_resource_len(dev, 2);
 	info->mem[1].memtype = UIO_MEM_PHYS;
 
@@ -189,13 +184,11 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	info->version = "0.0.1";
 
 	if (uio_register_device(&dev->dev, info))
-		goto out_unmap1;
+		goto out_unmap;
 
 	pci_set_drvdata(dev, ivshmem_info);
 
 	return 0;
-out_unmap1:
-	iounmap(info->mem[1].internal_addr);
 out_unmap:
 	iounmap(info->mem[0].internal_addr);
 out_release:
@@ -221,7 +214,6 @@ static void ivshmem_pci_remove(struct pci_dev *dev)
 		kfree(ivshmem_info->msix_entries);
 		kfree(ivshmem_info->msix_names);
 	}
-	iounmap(info->mem[1].internal_addr);
 	iounmap(info->mem[0].internal_addr);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
