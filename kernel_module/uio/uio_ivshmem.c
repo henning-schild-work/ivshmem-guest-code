@@ -157,6 +157,7 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 		goto out_release;
 
 	info->mem[0].memtype = UIO_MEM_PHYS;
+	info->mem[0].name = "registers";
 
 	info->mem[1].addr = pci_resource_start(dev, 2);
 	if (!info->mem[1].addr)
@@ -164,6 +165,7 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 
 	info->mem[1].size = pci_resource_len(dev, 2);
 	info->mem[1].memtype = UIO_MEM_PHYS;
+	info->mem[1].name = "shmem";
 
 	ivshmem_info->uio = info;
 	ivshmem_info->dev = dev;
