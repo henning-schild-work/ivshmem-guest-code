@@ -1,0 +1,47 @@
+ivshmem for jailhouse
+---------------------
+
+This branch contains a slightly modified version of the ivshmem UIO driver,
+which is needed for the ivshmem device implemented by the jailhouse hypervisor.
+
+	https://github.com/siemens/jailhouse
+
+The code can be used to test basic features, that is all.
+
+UIO kernel module
+-----------------
+compile:
+  cd kernel_module/uio
+  make
+use:
+  modprobe uio
+  insmod kernel_module/uio/uio_ivshmem.ko
+
+tools
+-----
+compile:
+  cd uio/tests/Interrupts/VM
+  cmake .
+  make
+
+
+testing
+-------
+Create a non-root cell with the ivshmem-demo running in it. And connect the
+ivshmem to your root-cell.
+
+With the kernel module loaded and a test-cell connected to the root-cell you
+should see interrupts coming in.
+
+  grep ivshmem /proc/interrupts
+
+You can use the tool uio_read to receive a number of interrupts
+  ./uio/tests/Interrupts/VM/uio_read /dev/uio0 <number>
+
+You can use the tool uio_send to send a number of interrupts, the demo should
+respond.
+  ./uio/tests/Interrupts/VM/uio_send /dev/uio0 <number> 0 0
+
+To read the first couple of bytes from the shared memory, you should see what
+the demo put into the shared memory. The value changes over time.
+  ./tests/shmem_test.py
