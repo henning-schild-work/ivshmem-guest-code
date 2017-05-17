@@ -27,15 +27,22 @@ struct ivshmem_info {
 	char (*msix_names)[256];
 	struct msix_entry *msix_entries;
 	int nvectors;
+	int jailhouse_mode;
 };
 
 static irqreturn_t ivshmem_handler(int irq, struct uio_info *dev_info)
 {
 
-	void __iomem *plx_intscr = dev_info->mem[0].internal_addr
-					+ IntrStatus;
+	struct ivshmem_info *ivshmem_info;
+	void __iomem *plx_intscr;
 	u32 val;
 
+	/* jailhouse does not implement IntrStatus */
+	ivshmem_info = dev_info->priv;
+	if (ivshmem_info->jailhouse_mode)
+		return IRQ_HANDLED;
+
+	plx_intscr = dev_info->mem[0].internal_addr + IntrStatus;
 	val = readl(plx_intscr);
 	if (val == 0)
 		return IRQ_NONE;
@@ -143,6 +150,7 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 		kfree(info);
 		return -ENOMEM;
 	}
+	info->priv = ivshmem_info;
 
 	if (pci_enable_device(dev))
 		goto out_free;
@@ -178,6 +186,7 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 		pci_read_config_dword(dev, JAILHOUSE_CFG_SHMEM_SZ + 4,
 			((u32*)&info->mem[1].size) + 1);
 		dev_info(&dev->dev, "using jailhouse mode\n");
+		ivshmem_info->jailhouse_mode = 1;
 	} else {
 		info->mem[1].addr = pci_resource_start(dev, 2);
 	}
