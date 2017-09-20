@@ -3,6 +3,7 @@
  *
  * (C) 2009 Cam Macdonell
  * (C) 2014 Henning Schild
+ * (C) 2017 Andreas Rollbühler
  * based on Hilscher CIF card driver (C) 2007 Hans J. Koch <hjk@linutronix.de>
  *
  * Licensed under GPL version 2 only.
@@ -14,6 +15,7 @@
 #include <linux/pci.h>
 #include <linux/uio_driver.h>
 #include <linux/io.h>
+#include <linux/version.h>
 
 #define IntrStatus 0x04
 #define IntrMask 0x00
@@ -64,14 +66,22 @@ static void free_msix_vectors(struct ivshmem_info *ivs_info,
 							const int max_vector)
 {
 	int i;
+	unsigned int irq;
 
-	for (i = 0; i < max_vector; i++)
-		free_irq(ivs_info->msix_entries[i].vector, ivs_info->uio);
+	for (i = 0; i < max_vector; i++) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,8,0)
+		irq = ivs_info->msix_entries[i].vector;
+#else
+		irq = pci_irq_vector(ivs_info->dev, ivs_info->msix_entries[i].entry);
+#endif
+		free_irq(irq, ivs_info->uio);
+	}
 }
 
 static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
 {
 	int i, err;
+	unsigned int irq;
 	const char *name = "ivshmem";
 
 	ivs_info->nvectors = nvectors;
@@ -92,37 +102,44 @@ static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
 	for (i = 0; i < nvectors; ++i)
 		ivs_info->msix_entries[i].entry = i;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,8,0)
 	err = pci_enable_msix(ivs_info->dev, ivs_info->msix_entries,
 					ivs_info->nvectors);
+#else
+	err = pci_alloc_irq_vectors(ivs_info->dev, 1, ivs_info->nvectors,
+			PCI_IRQ_MSIX);
+#endif
 	if (err > 0) {
-		ivs_info->nvectors = err; /* msi-x positive error code
-					 returns the number available*/
+		ivs_info->nvectors = err;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,8,0)
 		err = pci_enable_msix(ivs_info->dev, ivs_info->msix_entries,
 					ivs_info->nvectors);
-		if (err) {
-			dev_info(&ivs_info->dev->dev,
-				 "no MSI (%d). Back to INTx.\n", err);
-			goto error;
-		}
+#endif
 	}
 
-	if (err)
+	if (err < 0) {
+		dev_info(&ivs_info->dev->dev,
+			 "no MSI (%d). Back to INTx.\n", err);
 		goto error;
+	}
 
 	for (i = 0; i < ivs_info->nvectors; i++) {
 
 		snprintf(ivs_info->msix_names[i], sizeof(*ivs_info->msix_names),
 			"%s-config", name);
 
-		err = request_irq(ivs_info->msix_entries[i].vector,
-			ivshmem_msix_handler, 0,
-			ivs_info->msix_names[i], ivs_info->uio);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,8,0)
+		irq = ivs_info->msix_entries[i].vector;
+#else
+		irq = pci_irq_vector(ivs_info->dev, ivs_info->msix_entries[i].entry);
+#endif
+		err = request_irq(irq, ivshmem_msix_handler, 0,
+				ivs_info->msix_names[i], ivs_info->uio);
 
 		if (err) {
 			free_msix_vectors(ivs_info, i - 1);
 			goto error;
 		}
-
 	}
 
 	return 0;
@@ -130,6 +147,9 @@ error:
 	kfree(ivs_info->msix_entries);
 	kfree(ivs_info->msix_names);
 	ivs_info->nvectors = 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,8,0)
+	pci_free_irq_vectors(ivs_info->dev);
+#endif
 	return err;
 
 }
@@ -244,6 +264,9 @@ static void ivshmem_pci_remove(struct pci_dev *dev)
 		pci_disable_msix(dev);
 		kfree(ivshmem_info->msix_entries);
 		kfree(ivshmem_info->msix_names);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,8,0)
+		pci_free_irq_vectors(ivshmem_info->dev);
+#endif
 	}
 	iounmap(info->mem[0].internal_addr);
 	pci_release_regions(dev);
