@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>
-#include <openssl/sha.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
