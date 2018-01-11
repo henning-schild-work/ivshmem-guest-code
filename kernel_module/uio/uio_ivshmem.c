@@ -92,13 +92,15 @@ static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
 	for (i = 0; i < nvectors; ++i)
 		ivs_info->msix_entries[i].entry = i;
 
-	err = pci_enable_msix(ivs_info->dev, ivs_info->msix_entries,
-					ivs_info->nvectors);
+	err = pci_enable_msix_range(ivs_info->dev, ivs_info->msix_entries,
+				    ivs_info->nvectors, ivs_info->nvectors);
 	if (err > 0) {
 		ivs_info->nvectors = err; /* msi-x positive error code
 					 returns the number available*/
-		err = pci_enable_msix(ivs_info->dev, ivs_info->msix_entries,
-					ivs_info->nvectors);
+		err = pci_enable_msix_range(ivs_info->dev,
+					    ivs_info->msix_entries,
+					    ivs_info->nvectors,
+					    ivs_info->nvectors);
 		if (err) {
 			dev_info(&ivs_info->dev->dev,
 				 "no MSI (%d). Back to INTx.\n", err);
