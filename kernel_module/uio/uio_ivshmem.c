@@ -2,7 +2,7 @@
  * UIO IVShmem Driver
  *
  * (C) 2009 Cam Macdonell
- * (C) 2014 Henning Schild
+ * (C) 2017 Henning Schild
  * based on Hilscher CIF card driver (C) 2007 Hans J. Koch <hjk@linutronix.de>
  *
  * Licensed under GPL version 2 only.
@@ -24,9 +24,6 @@
 struct ivshmem_info {
 	struct uio_info *uio;
 	struct pci_dev *dev;
-	char (*msix_names)[256];
-	struct msix_entry *msix_entries;
-	int nvectors;
 	int jailhouse_mode;
 };
 
@@ -37,8 +34,15 @@ static irqreturn_t ivshmem_handler(int irq, struct uio_info *dev_info)
 	void __iomem *plx_intscr;
 	u32 val;
 
-	/* jailhouse does not implement IntrStatus */
 	ivshmem_info = dev_info->priv;
+
+	if (ivshmem_info->dev->msix_enabled) {
+		/* we have to do this explicitly when using MSI-X */
+		uio_event_notify(dev_info);
+		return IRQ_HANDLED;
+	}
+
+	/* jailhouse does not implement IntrStatus */
 	if (ivshmem_info->jailhouse_mode)
 		return IRQ_HANDLED;
 
@@ -50,98 +54,11 @@ static irqreturn_t ivshmem_handler(int irq, struct uio_info *dev_info)
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t ivshmem_msix_handler(int irq, void *opaque)
-{
-
-	struct uio_info *dev_info = (struct uio_info *) opaque;
-
-	/* we have to do this explicitly when using MSI-X */
-	uio_event_notify(dev_info);
-	return IRQ_HANDLED;
-}
-
-static void free_msix_vectors(struct ivshmem_info *ivs_info,
-							const int max_vector)
-{
-	int i;
-
-	for (i = 0; i < max_vector; i++)
-		free_irq(ivs_info->msix_entries[i].vector, ivs_info->uio);
-}
-
-static int request_msix_vectors(struct ivshmem_info *ivs_info, int nvectors)
-{
-	int i, err;
-	const char *name = "ivshmem";
-
-	ivs_info->nvectors = nvectors;
-
-	ivs_info->msix_entries = kmalloc(nvectors *
-					 sizeof(*ivs_info->msix_entries),
-					 GFP_KERNEL);
-	if (ivs_info->msix_entries == NULL)
-		return -ENOSPC;
-
-	ivs_info->msix_names = kmalloc(nvectors * sizeof(*ivs_info->msix_names),
-				       GFP_KERNEL);
-	if (ivs_info->msix_names == NULL) {
-		kfree(ivs_info->msix_entries);
-		return -ENOSPC;
-	}
-
-	for (i = 0; i < nvectors; ++i)
-		ivs_info->msix_entries[i].entry = i;
-
-	err = pci_enable_msix_range(ivs_info->dev, ivs_info->msix_entries,
-				    ivs_info->nvectors, ivs_info->nvectors);
-	if (err > 0) {
-		ivs_info->nvectors = err; /* msi-x positive error code
-					 returns the number available*/
-		err = pci_enable_msix_range(ivs_info->dev,
-					    ivs_info->msix_entries,
-					    ivs_info->nvectors,
-					    ivs_info->nvectors);
-		if (err) {
-			dev_info(&ivs_info->dev->dev,
-				 "no MSI (%d). Back to INTx.\n", err);
-			goto error;
-		}
-	}
-
-	if (err)
-		goto error;
-
-	for (i = 0; i < ivs_info->nvectors; i++) {
-
-		snprintf(ivs_info->msix_names[i], sizeof(*ivs_info->msix_names),
-			"%s-config", name);
-
-		err = request_irq(ivs_info->msix_entries[i].vector,
-			ivshmem_msix_handler, 0,
-			ivs_info->msix_names[i], ivs_info->uio);
-
-		if (err) {
-			free_msix_vectors(ivs_info, i - 1);
-			goto error;
-		}
-
-	}
-
-	return 0;
-error:
-	kfree(ivs_info->msix_entries);
-	kfree(ivs_info->msix_names);
-	ivs_info->nvectors = 0;
-	return err;
-
-}
-
 static int ivshmem_pci_probe(struct pci_dev *dev,
 					const struct pci_device_id *id)
 {
 	struct uio_info *info;
 	struct ivshmem_info *ivshmem_info;
-	int nvectors = 4;
 
 	info = kzalloc(sizeof(struct uio_info), GFP_KERNEL);
 	if (!info)
@@ -169,6 +86,10 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	info->mem[0].internal_addr = pci_ioremap_bar(dev, 0);
 	if (!info->mem[0].internal_addr)
 		goto out_release;
+
+	if (1 > pci_alloc_irq_vectors(dev, 1, 1,
+				      PCI_IRQ_LEGACY | PCI_IRQ_MSIX))
+		goto out_vector;
 
 	info->mem[0].memtype = UIO_MEM_PHYS;
 	info->mem[0].name = "registers";
@@ -201,27 +122,30 @@ static int ivshmem_pci_probe(struct pci_dev *dev,
 	ivshmem_info->uio = info;
 	ivshmem_info->dev = dev;
 
-	if (request_msix_vectors(ivshmem_info, nvectors) != 0) {
-		dev_info(&ivshmem_info->dev->dev, "regular IRQs\n");
-		info->irq = dev->irq;
+	if (pci_irq_vector(dev, 0)) {
+		info->irq = pci_irq_vector(dev, 0);
 		info->irq_flags = IRQF_SHARED;
 		info->handler = ivshmem_handler;
-		writel(0xffffffff, info->mem[0].internal_addr + IntrMask);
 	} else {
-		dev_info(&ivshmem_info->dev->dev, "MSI-X enabled\n");
-		pci_set_master(dev);
-		info->irq = -1;
+		dev_warn(&dev->dev, "No IRQ assigned to device: "
+			 "no support for interrupts?\n");
 	}
+	pci_set_master(dev);
 
-	info->name = "ivshmem";
+	info->name = "uio_ivshmem";
 	info->version = "0.0.1";
 
 	if (uio_register_device(&dev->dev, info))
 		goto out_unmap;
 
+	if (!dev->msix_enabled)
+		writel(0xffffffff, info->mem[0].internal_addr + IntrMask);
+
 	pci_set_drvdata(dev, ivshmem_info);
 
 	return 0;
+out_vector:
+	pci_free_irq_vectors(dev);
 out_unmap:
 	iounmap(info->mem[0].internal_addr);
 out_release:
@@ -241,12 +165,7 @@ static void ivshmem_pci_remove(struct pci_dev *dev)
 
 	pci_set_drvdata(dev, NULL);
 	uio_unregister_device(info);
-	if (ivshmem_info->nvectors) {
-		free_msix_vectors(ivshmem_info, ivshmem_info->nvectors);
-		pci_disable_msix(dev);
-		kfree(ivshmem_info->msix_entries);
-		kfree(ivshmem_info->msix_names);
-	}
+	pci_free_irq_vectors(dev);
 	iounmap(info->mem[0].internal_addr);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
