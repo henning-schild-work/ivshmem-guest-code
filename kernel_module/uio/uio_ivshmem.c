@@ -32,11 +32,8 @@ static irqreturn_t ivshmem_handler(int irq, struct uio_info *dev_info)
 
 	ivshmem_info = dev_info->priv;
 
-	if (ivshmem_info->dev->msix_enabled) {
-		/* we have to do this explicitly when using MSI-X */
-		uio_event_notify(dev_info);
+	if (ivshmem_info->dev->msix_enabled)
 		return IRQ_HANDLED;
-	}
 
 	plx_intscr = dev_info->mem[0].internal_addr + IntrStatus;
 	val = readl(plx_intscr);
