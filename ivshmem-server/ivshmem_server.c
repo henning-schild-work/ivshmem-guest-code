@@ -168,6 +168,7 @@ void add_new_guest(server_state_t * s) {
     int vm_sock;
     long new_posn;
     long neg1 = -1;
+    long qemu_expect_reversion = 0;
 
     vm_sock = accept(s->conn_socket, (struct sockaddr *)&remote, &t);
 
@@ -202,7 +203,7 @@ void add_new_guest(server_state_t * s) {
     s->live_vms[new_posn].sockfd = vm_sock;
     s->live_vms[new_posn].alive = 1;
 
-
+    sendPosition(vm_sock,qemu_expect_reversion);
     sendPosition(vm_sock, new_posn);
     sendUpdate(vm_sock, neg1, sizeof(long), s->shm_fd);
     printf("[NC] trying to send fds to new connection\n");
