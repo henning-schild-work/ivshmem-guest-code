@@ -194,7 +194,9 @@ void add_new_guest(server_state_t * s) {
 
     s->live_vms[new_posn].posn = new_posn;
     printf("[NC] Live_vms[%ld]\n", new_posn);
-    s->live_vms[new_posn].efd = (int *) malloc(sizeof(int));
+	//msi_vectors greater than 8, ivshmem_server coredump.
+	//when malloc memory, we need to specify the size. 
+    s->live_vms[new_posn].efd = (int *) malloc(sizeof(int)*s->msi_vectors);
     for (i = 0; i < s->msi_vectors; i++) {
         s->live_vms[new_posn].efd[i] = eventfd(0, 0);
         printf("\tefd[%ld] = %d\n", i, s->live_vms[new_posn].efd[i]);
